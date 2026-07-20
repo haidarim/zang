@@ -1,0 +1,139 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <!-- ==========================
+  SPRING BOOT PARENT (MANAGES VERSIONS)
+  Provides default versions for Spring Boot dependencies
+  =========================== -->
+  <parent>
+    <!-- Spring Boot Parent POM: manages versions of Spring Boot modules automatically -->
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.0.0</version>
+    <relativePath/> <!-- lookup parent from repository -->
+  </parent>
+
+  <groupId>io.github.haidarim</groupId>
+  <artifactId>zang</artifactId>
+  <packaging>pom</packaging>
+  <version>0.0.1</version>
+  <name>zang</name>
+  <url>http://maven.apache.org</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+	<!--Project description START -->
+	<description> description not provided! </description>
+	<!--Project description END -->
+ 
+	<!-- SCM information START -->
+	<scm>
+		<url>https://github.com/haidarim/</url>
+    	<connection>scm:git:git://github.com/haidarim/.git</connection>
+    	<developerConnection>scm:git:ssh://github.com:haidarim/.git</developerConnection>
+  	</scm>
+  	<!-- SCM information END -->
+
+  	<!-- Developers information START -->
+  	<developers>
+    	<developer>
+      		<id>orelease</id>
+      		<name>haidarim</name>
+    	</developer>
+  	</developers>
+  	<!-- Developers information END -->
+
+  	<!-- License information START -->
+  	<licenses>
+    	<license>
+      		<name>Apache License, Version 2.0</name>
+      		<url>https://www.apache.org/licenses/LICENSE-2.0</url>
+      		<distribution>repo</distribution>
+    	</license>
+  	</licenses>
+  	<!-- License information END -->
+	
+	<build>
+    	<plugins>
+        	<plugin>
+          		<groupId>org.sonatype.central</groupId>
+          		<artifactId>central-publishing-maven-plugin</artifactId>
+          		<version>0.8.0</version>
+          		<extensions>true</extensions>
+          		<configuration>
+             		<publishingServerId>central</publishingServerId>
+             		<autoPublish>true</autoPublish>
+             		<waitUntil>published</waitUntil>
+          		</configuration>
+  			</plugin>
+
+      		<!-- Source JAR START -->
+      		<plugin>
+        		<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-source-plugin</artifactId>
+        		<version>3.3.0</version>
+        		<executions>
+          			<execution>
+            			<id>attach-sources</id>
+            			<goals>
+              				<goal>jar</goal>
+            			</goals>
+          			</execution>
+        		</executions>
+      		</plugin>
+      		<!-- Source JAR END -->
+
+      		<!-- Javadoc JAR START -->
+      		<plugin>
+        		<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-javadoc-plugin</artifactId>
+        		<version>3.5.0</version>
+        		<executions>
+          			<execution>
+            			<id>attach-javadocs</id>
+            			<goals>
+              				<goal>jar</goal>
+            			</goals>
+          			</execution>
+        		</executions>
+      		</plugin>
+      		<!-- Javadoc JAR END -->
+
+      		<!-- GPG Signing jar and pom START -->
+      		<plugin>
+        		<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-gpg-plugin</artifactId>
+        		<version>3.1.0</version>
+        		<executions>
+          			<execution>
+            			<id>sign-artifacts</id>
+            			<phase>verify</phase>
+            			<goals>
+              				<goal>sign</goal>
+            			</goals>
+          			</execution>
+        		</executions>
+      		</plugin>
+      		<!-- GPG Signing jar and pom END -->
+    	</plugins>
+	</build>
+    <modules>
+        <module>libs/orelease-zang-data</module>
+        <module>services/orelease-user-service</module>
+        <module>services/orelease-chat-service</module>
+        <module>services/orelease-notification-service</module>
+        <module>services/orelease-call-service</module>
+        <module>services/orelease-analystics-service</module>
+        <module>platform/orelease-shard-service</module>
+        <module>platform/orelease-api-gateway</module>
+        <module>platform/orelease-service-discovery</module>
+        <module>platform/orelease-config-service</module>
+    </modules>
+</project>
