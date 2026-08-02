@@ -9,9 +9,13 @@
     <!-- Spring Boot Parent POM: manages versions of Spring Boot modules automatically -->
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.6</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
+
+  <properties>
+      <lombok.version>1.18.36</lombok.version>
+  </properties>
 
   <groupId>io.github.haidarim</groupId>
   <artifactId>zang</artifactId>
@@ -20,14 +24,16 @@
   <name>zang</name>
   <url>http://maven.apache.org</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 	<!--Project description START -->
 	<description> description not provided! </description>
@@ -132,8 +138,6 @@
         <module>services/orelease-call-service</module>
         <module>services/orelease-analystics-service</module>
         <module>platform/orelease-shard-service</module>
-        <module>platform/orelease-api-gateway</module>
-        <module>platform/orelease-service-discovery</module>
         <module>platform/orelease-config-service</module>
     </modules>
 </project>

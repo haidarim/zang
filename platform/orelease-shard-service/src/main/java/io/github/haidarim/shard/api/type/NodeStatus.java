@@ -1,4 +1,4 @@
-package io.github.haidarim.api.type;
+package io.github.haidarim.shard.api.type;
 
 public enum NodeStatus {
     ONLINE,
