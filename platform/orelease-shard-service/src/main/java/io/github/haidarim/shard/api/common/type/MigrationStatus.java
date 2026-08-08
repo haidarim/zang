@@ -5,5 +5,6 @@ public enum MigrationStatus {
     COPYING,
     VALIDATING,
     COMPLETED,
-    FAILED
+    FAILED,
+    CANCELLED
 }

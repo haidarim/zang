@@ -17,9 +17,11 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "SHARD_MAP",
-        uniqueConstraints = @UniqueConstraint(
-                name = "shard_name_uk", columnNames = {"SHARD_NAME"}
-        )
+        uniqueConstraints ={
+                @UniqueConstraint(
+                        name = "shard_name_uk", columnNames = {"SHARD_NAME"}
+                )
+        }
 )
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)

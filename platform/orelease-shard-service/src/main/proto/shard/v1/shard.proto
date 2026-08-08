@@ -13,73 +13,156 @@ option java_multiple_files = true;
 
 // define enum type
 enum ShardDomain {
-    DOMAIN_UNSPECIFIED = 0; // Protobuf 3 standard zero-value default
+    UNSPECIFIED = 0;
     CLIENT = 1;             // Fixed typo (CLIEN -> CLIENT)
     CHAT = 2;
     NOTIFICATION = 3;
 }
 
 enum NodeRole {
-    NODE_ROLE_UNSPECIFIED = 0;
+    UNSPECIFIED = 0;
     PRIMARY = 1;
     REPLICA = 2;
 }
 
 enum ShardStatus{
-    ACTIVE = 0;
-    INACTIVE = 1;
-    MIGRATING = 2;
-    FAILED = 3;
-}
-
-enum NodeStatus {
-    ONLINE = 0;
-    OFFLINE = 1;
-    DRAINING = 2;
-}
-
-enum MigrationStatus{
-    STARTED = 0;
-    COPYING = 1;
-    VALIDATING = 2;
-    COMPLETED = 3;
+    UNSPECIFIED = 0;
+    ACTIVE = 1;
+    INACTIVE = 2;
+    MIGRATING = 3;
     FAILED = 4;
 }
 
-enum LockReason {
-    MIGRATION = 0;
-    NODE_ADDITION = 1;
-    NODE_REMOVAL = 2;
-    REBALANCE = 3;
-    MAINTENANCE = 4;
-    MANUAL = 5;
+enum NodeStatus {
+    UNSPECIFIED = 0;
+    ONLINE = 1;
+    OFFLINE = 2;
+    DRAINING = 3;
 }
 
-enum LockOperation {
-    RELEASE = 0;
-    ACQUIRE = 1;
+enum MigrationStatus{
+    UNSPECIFIED = 0;
+    STARTED = 1;
+    COPYING = 2;
+    VALIDATING = 3;
+    COMPLETED = 4;
+    FAILED = 5;
+    CANCELLED = 6;
 }
+
+enum LockReason {
+    UNSPECIFIED = 0;
+    MIGRATION = 1;
+    NODE_ADDITION = 2;
+    NODE_REMOVAL = 3;
+    REBALANCE = 4;
+    MAINTENANCE = 5;
+    MANUAL = 6;
+}
+
 
 // ==========================================
 // CONTROL (CONTROL PLANE) MESSAGES
 // ==========================================
-message
+message GetShardRequest{
+    string shard_name = 1;
+}
 
-message ShardOperationRequest{
+message GetShardResponse{
+    int32 shard_id = 1;
+    string shard_name = 2;
+    string database_name = 3;
+    ShardDomain domain = 4;
+    ShardStatus status = 5;
+    int64 version = 6;
+}
+
+message GetAllShardsRequest{
+    // No filed needed
+}
+
+message GetAllShardsResponse{
+    repeated GetShardResponse shards = 1;
+}
+
+message GetShardsForDatabaseRequest{
+    string database_name = 1;
+    ShardDomain domain = 2;
+}
+
+message GetShardsForDatabaseResponse{
+    repeated GetShardResponse shards = 1;
+}
+
+message CreateShardRequest{
     string shard_name = 1;
     string database_name = 2;
     ShardDomain domain = 3;
     ShardStatus status = 4;
-    int64 version = 5;
 }
 
-message ShardOperationResponse{
+message CreateShardResponse{
+    int32 shard_id = 1;
+    string shard_name = 2;
+}
+
+message UpdateShardRequest{
+    string shard_name = 1;
+    string database_name = 2;
+    ShardDomain domain = 3;
+    ShardStatus status = 4;
+    int64 expected_version = 5;
+}
+
+message UpdateShardResponse{
     int32 shard_id = 1;
     string shard_name = 2;
     int64  version = 3;
 }
 
-message NodeOperationRequest {
+message DeleteShardRequest{
+    string shard_name = 1;
+}
+
+message DeleteShardResponse{
+    int32 shard_id = 1;
+}
+
+
+
+message GetAllNodesRequest{
+    // no field needed
+}
+
+message GetNodeByIdRequest{
+    int64 node_id = 1;
+}
+
+message GetNodeByDetailsRequest{
+    string shard_name = 1;
+    string host_name = 2;
+    int32 port = 3;
+}
+
+message GetNodeResponse {
+    int64 node_id = 1;
+    int32 shard_id = 2;
+    string shard_name = 3;
+    string hostname = 4;
+    int32 port = 5;
+    string region = 6;
+    NodeRole role = 7;
+    string connection_secret = 8;
+    int32 max_connections = 9;
+    int32 weight = 10;
+    NodeStatus status = 11;
+}
+
+message GetAllNodesResponse{
+    repeated GetNodeResponse nodes = 1;
+}
+
+message CreateNodeRequest {
     string shard_name = 1;
     string hostname = 2;
     int32 port = 3;
@@ -91,42 +174,139 @@ message NodeOperationRequest {
     NodeStatus status = 9;
 }
 
-message NodeOperationResponse {
+message CreateNodeResponse {
     int64 node_id = 1;
     int32 shard_id = 2;
     string shard_name = 3;
     string hostname = 4;
-    string port = 5;
+    int32 port = 5;
 }
 
-message ShardLockRequest{
-    int32 shard_name = 1;
-    int64 migration = 2;
+message UpdateNodeRequest {
+    int64 node_id = 1;
+    string hostname = 2;
+    int32 port = 3;
+    string region = 4;
+    NodeRole role = 5;
+    string connection_secret = 6;
+    int32 max_connections = 7;
+    int32 weight = 8;
+    NodeStatus status = 9;
+}
+
+message UpdateNodeResponse {
+    int64 node_id = 1;
+    int32 shard_id = 2;
+    string shard_name = 3;
+    string hostname = 4;
+    int32 port = 5;
+}
+
+message DeleteNodeRequest{
+    string shard_name = 1;
+    string hostname = 2;
+    int32 port = 3;
+}
+
+message DeleteNodeResponse{
+    int64  node_id = 1;
+}
+
+
+
+message GetShardLocksRequest{
+    // no field needed
+}
+
+message GetShardLocksResponse{
+    repeated ShardLockResponse shard_locks = 1;
+}
+
+message AcquireLockRequest{
+    string shard_name = 1;
+    int64 migration_id = 2;
     LockReason reason = 3;
     google.protobuf.Timestamp expires_at = 4;
-    LockOperation operation = 5;
+}
+
+message AcquireLockResponse{
+    string shard_name = 1;
+}
+
+message ReleaseLockRequest{
+    string shard_name = 1;
+}
+
+message ReleaseLockResponse{
+    string shard_name = 1;
 }
 
 message ShardLockResponse{
-    int32 shard_id = 1;
-    int64 migration = 2;
+    string shard_name = 1;
+    int64 migration_id = 2;
+    LockReason reason = 3;
+    google.protobuf.Timestamp expires_at = 4;
+    google.protobuf.Timestamp locked_at = 5;
 }
 
-message ShardMigrationRequest{
+
+message GetMigrationRequest{
+    int64 migration_id = 1;
+}
+
+message GetMigrationResponse{
     int32 from_shard_id = 1;
     int32 to_shard_id = 2;
     MigrationStatus status = 3;
     int32 process_percent = 4;
     string error_message = 5;
-    int32 started_at = 6;
-    int32 completed_at = 7;
+    google.protobuf.Timestamp started_at = 6;
+    google.protobuf.Timestamp completed_at = 7;
 }
 
-message ShardMigrationResponse{
+message GetAllMigrationsRequest{
+
+}
+
+message GetAllMigrationsResponse{
+    repeated GetMigrationResponse migrations = 1;
+}
+
+message CreateMigrationRequest{
+    int32 from_shard_id = 1;
+    int32 to_shard_id = 2;
+}
+
+message CreateMigrationResponse{
     int64 migration_id = 1;
     MigrationStatus status = 2;
-    int32 started_at = 3;
-    int32 completed_at = 4;
+    google.protobuf.Timestamp started_at = 3;
+}
+
+
+message UpdateMigrationRequest {
+    int64 migration_id = 1;
+    MigrationStatus status = 2;
+    int32 progress_percent = 3;
+    string error_message = 4;
+}
+
+message UpdateMigrationResponse {
+    int64 migration_id = 1;
+    MigrationStatus status = 2;
+    int32 progress_percent = 3;
+    string error_message = 4;
+    google.protobuf.Timestamp started_at = 5;
+    google.protobuf.Timestamp completed_at = 6;
+}
+
+message CancelMigrationRequest{
+    int64 migration_id = 1;
+}
+
+message CancelMigrationResponse{
+    int64 migration_id = 1;
+    MigrationStatus status = 2;
 }
 
 // ==========================================
@@ -149,31 +329,36 @@ message ShardRouteResponse{
 /**
  * Controller Services
  */
-service ShardMapController{
-    rpc ReadShard(ShardMigrationRequest) returns (ShardMigrationResponse);
-    rpc AddShard(ShardOperationRequest) returns (ShardOperationResponse);
-    rpc UpdateShard(ShardOperationRequest) returns (ShardOperationResponse);
-    rpc RemoveShard(ShardOperationRequest) returns (ShardOperationResponse);
+service ShardMapApiService{
+    rpc GetAllShards(GetAllShardsRequest) returns (GetAllShardsResponse);
+    rpc GetShard(GetShardRequest) returns (GetShardResponse);
+    rpc GetShardsForDatabase(GetShardsForDatabaseRequest) returns (GetShardsForDatabaseResponse);
+    rpc CreateShard(CreateShardRequest) returns (CreateShardResponse);
+    rpc UpdateShard(UpdateShardRequest) returns (UpdateShardResponse);
+    rpc DeleteShard(DeleteShardRequest) returns (DeleteShardResponse);
 }
 
-service ShardLockController{
-    rpc ReadShardLock(ShardLockRequest) returns (ShardLockResponse);
-    rpc AcquireLock(ShardLockRequest) returns (ShardLockResponse);
-    rpc ReleaseLock(ShardLockRequest) returns (ShardLockResponse);
+service ShardLockApiService{
+    rpc GetShardLocks(GetShardLocksRequest) returns (GetShardLocksResponse);
+    rpc AcquireLock(AcquireLockRequest) returns (AcquireLockResponse);
+    rpc ReleaseLock(ReleaseLockRequest) returns (ReleaseLockResponse);
 }
 
-service ShardMigrationController{
-    rpc ReadMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
-    rpc AddMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
-    rpc UpdateMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
-    rpc RemoveMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
+service ShardMigrationApiService{
+    rpc GetMigration(GetMigrationRequest) returns (GetMigrationResponse);
+    rpc GetAllMigrations(GetAllMigrationsRequest) returns (GetAllMigrationsResponse);
+    rpc CreateMigration(CreateMigrationRequest) returns (CreateMigrationResponse);
+    rpc UpdateMigration(UpdateMigrationRequest) returns (UpdateMigrationResponse);
+    rpc CancelMigration(CancelMigrationRequest) returns (CancelMigrationResponse);
 }
 
-service ShardNodeController{
-    rpc ReadNode(NodeOperationRequest) returns (NodeOperationResponse);
-    rpc AddNode(NodeOperationRequest) returns (NodeOperationResponse);
-    rpc UpdateNode(NodeOperationRequest) returns (NodeOperationResponse);
-    rpc RemoveNode(NodeOperationRequest) returns (NodeOperationResponse);
+service ShardNodeApiService{
+    rpc GetNodeById(GetNodeByIdRequest) returns (GetNodeResponse);
+    rpc GetNodeByDetails(GetNodeByDetailsRequest) returns (GetNodeResponse);
+    rpc GetAllNodes(GetAllNodesRequest) returns (GetAllNodesResponse);
+    rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse);
+    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
 }
 
 
@@ -181,6 +366,6 @@ service ShardNodeController{
 /**
  * Runtime Services
  */
-service ShardRouteController{
+service ShardRouteApiService{
     rpc ResolveRoute(ShardRouteRequest) returns (ShardRouteResponse);
 }
