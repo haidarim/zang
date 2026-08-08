@@ -1,0 +1,15 @@
+name: BUILD
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  JAVA-DOC:
+    needs: build
+    uses: haidarim/ci-templates/.github/workflows/java-jdoc-ci.yml@v1.1.10
+    with:
+      java-version: "21"
+
+

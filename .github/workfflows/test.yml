@@ -1,0 +1,13 @@
+name: TEST
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  TEST:
+    needs: build
+    uses: haidarim/ci-templates/.github/workflows/java-test-ci.yml@v1.1.10
+    with:
+      java-version: "21"
