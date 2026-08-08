@@ -13,45 +13,45 @@ option java_multiple_files = true;
 
 // define enum type
 enum ShardDomain {
-    UNSPECIFIED = 0;
+    UNSPECIFIED_DOMAIN = 0;
     CLIENT = 1;             // Fixed typo (CLIEN -> CLIENT)
     CHAT = 2;
     NOTIFICATION = 3;
 }
 
 enum NodeRole {
-    UNSPECIFIED = 0;
+    UNSPECIFIED_ROLE = 0;
     PRIMARY = 1;
     REPLICA = 2;
 }
 
 enum ShardStatus{
-    UNSPECIFIED = 0;
+    UNSPECIFIED_SHARD_STATUS = 0;
     ACTIVE = 1;
     INACTIVE = 2;
     MIGRATING = 3;
-    FAILED = 4;
+    SHARD_FAILED = 4;
 }
 
 enum NodeStatus {
-    UNSPECIFIED = 0;
+    UNSPECIFIED_NODE_STATUS = 0;
     ONLINE = 1;
     OFFLINE = 2;
     DRAINING = 3;
 }
 
 enum MigrationStatus{
-    UNSPECIFIED = 0;
+    UNSPECIFIED_MIGRATION_STATUS = 0;
     STARTED = 1;
     COPYING = 2;
     VALIDATING = 3;
     COMPLETED = 4;
-    FAILED = 5;
+    MIGRATION_FAILED = 5;
     CANCELLED = 6;
 }
 
 enum LockReason {
-    UNSPECIFIED = 0;
+    UNSPECIFIED_LOCK_REASON = 0;
     MIGRATION = 1;
     NODE_ADDITION = 2;
     NODE_REMOVAL = 3;

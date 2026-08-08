@@ -137,4 +137,14 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
 
         putAll(nodes);
     }
+
+    @Override
+    public void refreshLocal(Long nodeId) {
+
+    }
+
+    @Override
+    public void removeLocal(Long nodeId) {
+
+    }
 }

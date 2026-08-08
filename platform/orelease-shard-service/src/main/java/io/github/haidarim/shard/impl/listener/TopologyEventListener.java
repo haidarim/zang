@@ -21,8 +21,8 @@ public class TopologyEventListener {
 
     @EventListener
     public void handleNodeCreation(NodeCreatedEvent event){
-        ShardNodeModel model = mapToNodeModel(event.getNode());
-        nodeCacheManager.put(model.nodeId(), model);
+//        ShardNodeModel model = mapToNodeModel(event.getNode());
+//        nodeCacheManager.put(model.nodeId(), model);
     }
 
     private ShardNodeModel mapToNodeModel(ShardNode node){
