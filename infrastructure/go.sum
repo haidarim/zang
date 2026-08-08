@@ -1,0 +1,18 @@
+my-go-project/
+├── go.mod                 # Dependency management file (root level)
+├── go.sum                 # Checksums for dependencies
+├── cmd/                   # Main entry points for binaries
+│   ├── api/               # Directory for the API executable
+│   │   └── main.go        # Minimal "glue" code to start the server
+│   └── worker/            # Directory for a background worker binary
+│       └── main.go
+├── internal/              # PRIVATE application code (Compiler enforced)
+│   ├── user/              # Organized by domain/feature, NOT layer
+│   │   ├── handler.go     # HTTP/gRPC handlers
+│   │   ├── service.go     # Business logic
+│   │   └── repository.go  # Database operations
+│   └── payment/
+├── pkg/                   # PUBLIC libraries reusable by other projects
+│   └── validator/         # Custom validation utilities
+├── api/                   # API contracts (OpenAPI/Swagger specs, Protobufs)
+└── configs/
