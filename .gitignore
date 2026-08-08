@@ -4,3 +4,15 @@
 
 # compiled 
 **/target
+
+# temporary files
+*.tmp
+*.temp
+
+# bak
+*.bak
+
+# sec
+*.key
+*.sec
+*.jks

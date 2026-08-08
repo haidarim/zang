@@ -1,0 +1,186 @@
+// protocol buffer file for shard APIs
+syntax = "proto3";
+
+// name space to avoid name collision with any other proto file
+package shard;
+import "google/protobuf/timestamp.proto";
+
+// where the generated classes should be placed
+option java_package = "io.github.haidarim.shard.grpc";
+
+// generate separate java file for each message, enum and service instead of putting all in one
+option java_multiple_files = true;
+
+// define enum type
+enum ShardDomain {
+    DOMAIN_UNSPECIFIED = 0; // Protobuf 3 standard zero-value default
+    CLIENT = 1;             // Fixed typo (CLIEN -> CLIENT)
+    CHAT = 2;
+    NOTIFICATION = 3;
+}
+
+enum NodeRole {
+    NODE_ROLE_UNSPECIFIED = 0;
+    PRIMARY = 1;
+    REPLICA = 2;
+}
+
+enum ShardStatus{
+    ACTIVE = 0;
+    INACTIVE = 1;
+    MIGRATING = 2;
+    FAILED = 3;
+}
+
+enum NodeStatus {
+    ONLINE = 0;
+    OFFLINE = 1;
+    DRAINING = 2;
+}
+
+enum MigrationStatus{
+    STARTED = 0;
+    COPYING = 1;
+    VALIDATING = 2;
+    COMPLETED = 3;
+    FAILED = 4;
+}
+
+enum LockReason {
+    MIGRATION = 0;
+    NODE_ADDITION = 1;
+    NODE_REMOVAL = 2;
+    REBALANCE = 3;
+    MAINTENANCE = 4;
+    MANUAL = 5;
+}
+
+enum LockOperation {
+    RELEASE = 0;
+    ACQUIRE = 1;
+}
+
+// ==========================================
+// CONTROL (CONTROL PLANE) MESSAGES
+// ==========================================
+message
+
+message ShardOperationRequest{
+    string shard_name = 1;
+    string database_name = 2;
+    ShardDomain domain = 3;
+    ShardStatus status = 4;
+    int64 version = 5;
+}
+
+message ShardOperationResponse{
+    int32 shard_id = 1;
+    string shard_name = 2;
+    int64  version = 3;
+}
+
+message NodeOperationRequest {
+    string shard_name = 1;
+    string hostname = 2;
+    int32 port = 3;
+    string region = 4;
+    NodeRole role = 5;
+    string connection_secret = 6;
+    int32 max_connections = 7;
+    int32 weight = 8;
+    NodeStatus status = 9;
+}
+
+message NodeOperationResponse {
+    int64 node_id = 1;
+    int32 shard_id = 2;
+    string shard_name = 3;
+    string hostname = 4;
+    string port = 5;
+}
+
+message ShardLockRequest{
+    int32 shard_name = 1;
+    int64 migration = 2;
+    LockReason reason = 3;
+    google.protobuf.Timestamp expires_at = 4;
+    LockOperation operation = 5;
+}
+
+message ShardLockResponse{
+    int32 shard_id = 1;
+    int64 migration = 2;
+}
+
+message ShardMigrationRequest{
+    int32 from_shard_id = 1;
+    int32 to_shard_id = 2;
+    MigrationStatus status = 3;
+    int32 process_percent = 4;
+    string error_message = 5;
+    int32 started_at = 6;
+    int32 completed_at = 7;
+}
+
+message ShardMigrationResponse{
+    int64 migration_id = 1;
+    MigrationStatus status = 2;
+    int32 started_at = 3;
+    int32 completed_at = 4;
+}
+
+// ==========================================
+// RUNTIME (CONTROL PLANE) MESSAGES
+// ==========================================
+message ShardRouteRequest{
+    string entity_id = 1;
+    ShardDomain domain = 2;
+}
+
+message ShardRouteResponse{
+    string shard_name = 1;
+    string database_name = 2;
+    string hostname = 3;
+    int32 port = 4;
+    int64 version = 5;
+}
+
+
+/**
+ * Controller Services
+ */
+service ShardMapController{
+    rpc ReadShard(ShardMigrationRequest) returns (ShardMigrationResponse);
+    rpc AddShard(ShardOperationRequest) returns (ShardOperationResponse);
+    rpc UpdateShard(ShardOperationRequest) returns (ShardOperationResponse);
+    rpc RemoveShard(ShardOperationRequest) returns (ShardOperationResponse);
+}
+
+service ShardLockController{
+    rpc ReadShardLock(ShardLockRequest) returns (ShardLockResponse);
+    rpc AcquireLock(ShardLockRequest) returns (ShardLockResponse);
+    rpc ReleaseLock(ShardLockRequest) returns (ShardLockResponse);
+}
+
+service ShardMigrationController{
+    rpc ReadMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
+    rpc AddMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
+    rpc UpdateMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
+    rpc RemoveMigration(ShardMigrationRequest) returns (ShardMigrationResponse);
+}
+
+service ShardNodeController{
+    rpc ReadNode(NodeOperationRequest) returns (NodeOperationResponse);
+    rpc AddNode(NodeOperationRequest) returns (NodeOperationResponse);
+    rpc UpdateNode(NodeOperationRequest) returns (NodeOperationResponse);
+    rpc RemoveNode(NodeOperationRequest) returns (NodeOperationResponse);
+}
+
+
+
+/**
+ * Runtime Services
+ */
+service ShardRouteController{
+    rpc ResolveRoute(ShardRouteRequest) returns (ShardRouteResponse);
+}
