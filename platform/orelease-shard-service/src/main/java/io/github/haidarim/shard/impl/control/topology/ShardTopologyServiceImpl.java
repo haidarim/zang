@@ -52,9 +52,9 @@ public class ShardTopologyServiceImpl implements ShardTopologyService {
         nodeCacheManager.refresh();
         virtualShardCacheManager.refresh();
 
-        log.info("Updated route cache with {} routes", routeCacheManager.getAll().size());
-        log.info("Updated node cache with {} nodes", nodeCacheManager.getAll().size());
-        log.info("Updated virtual shards cache with {} virtualShards", virtualShardCacheManager.getAll().size());
+//        log.info("Updated route cache with {} routes", routeCacheManager.getAll().size());
+//        log.info("Updated node cache with {} nodes", nodeCacheManager.getAll().size());
+//        log.info("Updated virtual shards cache with {} virtualShards", virtualShardCacheManager.getAll().size());
 
 //        eventPublisher.publishEvent(new TopologyRefreshedEvent(Map.copyOf(routeCacheManager.getAll())));
     }

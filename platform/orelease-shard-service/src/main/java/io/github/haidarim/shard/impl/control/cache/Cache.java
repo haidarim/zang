@@ -9,6 +9,7 @@ public final class Cache {
     public static final String REDIS_KEY_ROUTE_PREFIX = "shard:route:%d:%s";
     public static final String REDIS_KEY_VIRTUAL_SHARD_PREFIX = "shard:virtual:%s:%d";
     public static final String REDIS_KEY_SHARD_NODE_PREFIX = "shard:node:%d";
+    public static final String REDIS_KEY_SHARD_NODE_BY_SHARD_ID = "shard:nodes:%d";
 
     public static final String ALL_ROUTE_KEYS = "shard:route:*";
     public static final String ALL_VIRTUAL_SHARD_KEYS = "shard:virtual:*";
@@ -30,7 +31,9 @@ public final class Cache {
     static String shardNode(Long nodeId){
         return String.format(REDIS_KEY_SHARD_NODE_PREFIX, nodeId);
     }
-
+    static String shardNodeByShardId(Integer shardId){
+        return String.format(REDIS_KEY_SHARD_NODE_BY_SHARD_ID, shardId);
+    }
 
     public static enum CacheEntity {
         SHARD_MAP,
