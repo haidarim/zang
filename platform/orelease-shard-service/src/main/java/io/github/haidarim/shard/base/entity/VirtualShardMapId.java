@@ -12,9 +12,9 @@ import java.io.Serializable;
 @Embeddable
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class VirtualShardMapId implements Serializable {
 
     @Enumerated(EnumType.STRING)

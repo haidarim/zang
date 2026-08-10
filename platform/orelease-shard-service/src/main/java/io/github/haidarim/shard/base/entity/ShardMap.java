@@ -4,6 +4,8 @@ import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.api.common.type.ShardStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,7 +25,7 @@ import java.util.List;
                 )
         }
 )
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ShardMap {
 
@@ -31,30 +33,41 @@ public class ShardMap {
     @GeneratedValue
     @Column(name = "SHARD_ID")
     @EqualsAndHashCode.Include
+    @ToString.Include
     private Integer shardId;
 
     @Column(name = "SHARD_NAME", nullable = false)
-    private String shardName; // TODO add to route and node models, also commands
+    @ToString.Include
+    private String shardName;
 
     @Column(name = "DATABASE_NAME", nullable = false)
+    @ToString.Include
     private String databaseName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "DOMAIN", nullable = false)
+    @ToString.Include
     private ShardDomain domain;
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
+    @ToString.Include
     private ShardStatus status = ShardStatus.ACTIVE;
 
+    @Version
     @Column(name = "VERSION", nullable = false)
-    private Long version = 1L;
+    @ToString.Include
+    private Long version;
 
-    @Column(name = "CREATED_AT", nullable = false)
-    private Instant createdAt = Instant.now();
+    @CreatedDate
+    @Column(name = "CREATED_AT", nullable = false, updatable = false)
+    @ToString.Include
+    private Instant createdAt;
 
+    @LastModifiedDate
     @Column(name = "UPDATED_AT", nullable = false)
-    private Instant updatedAt = Instant.now();
+    @ToString.Include
+    private Instant updatedAt;
 
     // ShardMap referenced by ShardNode
     @OneToMany(
@@ -89,4 +102,12 @@ public class ShardMap {
             orphanRemoval = true
     )
     private List<VirtualShardMap> virtualShardMaps = new ArrayList<>();
+
+
+    public ShardMap(String shardName, String databaseName, ShardDomain domain, ShardStatus status){
+        this.setShardName(shardName);
+        this.setDatabaseName(databaseName);
+        this.setDomain(domain);
+        this.setStatus(status);
+    }
 }

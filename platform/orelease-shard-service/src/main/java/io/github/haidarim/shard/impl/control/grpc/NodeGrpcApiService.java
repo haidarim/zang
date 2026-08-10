@@ -1,11 +1,16 @@
 package io.github.haidarim.shard.impl.control.grpc;
 
-import io.github.haidarim.shard.grpc.*;
+import io.github.haidarim.shard.generated.grpc.*;
 import io.grpc.stub.StreamObserver;
+import lombok.RequiredArgsConstructor;
+import net.devh.boot.grpc.server.service.GrpcService;
+import org.hibernate.sql.ast.tree.expression.Over;
 
 /**
  * NodeGrpcApiService
  */
+@GrpcService
+@RequiredArgsConstructor
 public class NodeGrpcApiService extends ShardNodeApiServiceGrpc.ShardNodeApiServiceImplBase {
 
     @Override
@@ -13,6 +18,9 @@ public class NodeGrpcApiService extends ShardNodeApiServiceGrpc.ShardNodeApiServ
 
     @Override
     public void getNodeByDetails(GetNodeByDetailsRequest request, StreamObserver<GetNodeResponse> responseStreamObserver){}
+
+    @Override
+    public void getAllNodesForShard(GetAllNodesForShardRequest request, StreamObserver<GetAllNodesResponse> responseStreamObserver){}
 
     @Override
     public void getAllNodes(GetAllNodesRequest request, StreamObserver<GetAllNodesResponse> responseStreamObserver){}

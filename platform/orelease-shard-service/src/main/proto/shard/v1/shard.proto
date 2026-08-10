@@ -6,7 +6,7 @@ package shard;
 import "google/protobuf/timestamp.proto";
 
 // where the generated classes should be placed
-option java_package = "io.github.haidarim.shard.grpc";
+option java_package = "io.github.haidarim.shard.generated.grpc";
 
 // generate separate java file for each message, enum and service instead of putting all in one
 option java_multiple_files = true;
@@ -162,6 +162,10 @@ message GetAllNodesResponse{
     repeated GetNodeResponse nodes = 1;
 }
 
+message GetAllNodesForShardRequest{
+    string shard_name = 1;
+}
+
 message CreateNodeRequest {
     string shard_name = 1;
     string hostname = 2;
@@ -222,6 +226,10 @@ message GetShardLocksResponse{
     repeated ShardLockResponse shard_locks = 1;
 }
 
+message GetAllLocksForShardRequest{
+    string shard_name = 1;
+}
+
 message AcquireLockRequest{
     string shard_name = 1;
     int64 migration_id = 2;
@@ -270,6 +278,10 @@ message GetAllMigrationsRequest{
 
 message GetAllMigrationsResponse{
     repeated GetMigrationResponse migrations = 1;
+}
+
+message GetAllMigrationsForShardRequest{
+    string shard_name = 1;
 }
 
 message CreateMigrationRequest{
@@ -340,6 +352,7 @@ service ShardMapApiService{
 
 service ShardLockApiService{
     rpc GetShardLocks(GetShardLocksRequest) returns (GetShardLocksResponse);
+    rpc GetAllLocksForShard(GetAllLocksForShardRequest) returns (GetShardLocksResponse);
     rpc AcquireLock(AcquireLockRequest) returns (AcquireLockResponse);
     rpc ReleaseLock(ReleaseLockRequest) returns (ReleaseLockResponse);
 }
@@ -347,6 +360,7 @@ service ShardLockApiService{
 service ShardMigrationApiService{
     rpc GetMigration(GetMigrationRequest) returns (GetMigrationResponse);
     rpc GetAllMigrations(GetAllMigrationsRequest) returns (GetAllMigrationsResponse);
+    rpc GetAllMigrationsForShard(GetAllMigrationsForShardRequest) returns (GetAllMigrationsResponse);
     rpc CreateMigration(CreateMigrationRequest) returns (CreateMigrationResponse);
     rpc UpdateMigration(UpdateMigrationRequest) returns (UpdateMigrationResponse);
     rpc CancelMigration(CancelMigrationRequest) returns (CancelMigrationResponse);
@@ -355,6 +369,7 @@ service ShardMigrationApiService{
 service ShardNodeApiService{
     rpc GetNodeById(GetNodeByIdRequest) returns (GetNodeResponse);
     rpc GetNodeByDetails(GetNodeByDetailsRequest) returns (GetNodeResponse);
+    rpc GetAllNodesForShard(GetAllNodesForShardRequest) returns (GetAllNodesResponse);
     rpc GetAllNodes(GetAllNodesRequest) returns (GetAllNodesResponse);
     rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
