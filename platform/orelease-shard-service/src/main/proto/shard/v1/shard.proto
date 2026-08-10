@@ -60,6 +60,11 @@ enum LockReason {
     MANUAL = 6;
 }
 
+enum RouteIntent{
+    UNSPECIFIED_ROUTE_INTENT = 0;
+    READ = 1;
+    WRITE = 2;
+}
 
 // ==========================================
 // CONTROL (CONTROL PLANE) MESSAGES
@@ -327,6 +332,7 @@ message CancelMigrationResponse{
 message ShardRouteRequest{
     string entity_id = 1;
     ShardDomain domain = 2;
+    RouteIntent routeIntent = 3;
 }
 
 message ShardRouteResponse{

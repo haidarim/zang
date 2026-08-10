@@ -2,6 +2,7 @@ package io.github.haidarim.shard.impl.control.cache;
 
 import io.github.haidarim.shard.api.common.constants.ShardConstants;
 import io.github.haidarim.shard.api.common.model.ShardRouteModel;
+import io.github.haidarim.shard.api.common.type.RouteIntent;
 import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static io.github.haidarim.shard.api.common.type.NodeRole.PRIMARY;
@@ -22,6 +24,7 @@ import static io.github.haidarim.shard.api.common.type.NodeStatus.ONLINE;
 import static io.github.haidarim.shard.impl.control.cache.Cache.ALL_ROUTE_KEYS;
 import static io.github.haidarim.shard.impl.control.cache.Cache.shardRoute;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
+import static io.github.haidarim.shard.utils.LockUtils.removeLock;
 
 /**
  * Cache manager for {@link ShardRouteModel}
@@ -30,55 +33,59 @@ import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
 @RequiredArgsConstructor
 public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
 
-    private final Map<Integer, ShardRouteModel> localCache = new ConcurrentHashMap<>();
+    private final Map<String, ShardRouteModel> localCache = new ConcurrentHashMap<>();
     private final RedisTemplate<String, ShardRouteModel> redisCache;
 
     private final ShardNodeRepository shardNodeRepository;
-    private final Map<Integer, Object> locks = new ConcurrentHashMap<>();
+    private final Map<Integer, ReentrantLock> locks = new ConcurrentHashMap<>();
 
     @Override
-    public ShardRouteModel getRoute(Integer shardId) {
+    public ShardRouteModel getRoute(Integer shardId, RouteIntent routeIntent) {
         // try with local cache
-        ShardRouteModel model = localCache.get(shardId);
-        if (model != null){
+        ShardRouteModel model = localCache.get(shardRoute(shardId, routeIntent));
+        if (model != null) {
             return model;
         }
 
-        Object lock = locks.computeIfAbsent(shardId, key -> new Object());
+        ReentrantLock lock = locks.computeIfAbsent(shardId, key -> new ReentrantLock());
         // else try with redis cache, else db
-        synchronized (lock) {
-            model = localCache.get(shardId);
-            if (model != null){
+        lock.lock();
+        try {
+            model = localCache.get(shardRoute(shardId, routeIntent));
+            if (model != null) {
                 return model;
             }
 
-            model = redisCache.opsForValue().get(shardRoute(shardId));
+            model = redisCache.opsForValue().get(shardRoute(shardId, routeIntent));
             if (model != null) {
-                localCache.put(shardId, model);
+                localCache.put(shardRoute(shardId, routeIntent), model);
                 return model;
             }
 
             return fetchAndUpdateCache(shardId);
+        }finally {
+            lock.unlock();
+            removeLock(locks, shardId, lock);
         }
     }
 
     @Override
     public void put(Integer shardId, ShardRouteModel route) {
-        localCache.put(shardId, route);
-        redisCache.opsForValue().set(shardRoute(shardId), route);
+        localCache.put(shardRoute(shardId, route.routeIntent()), route);
+        redisCache.opsForValue().set(shardRoute(shardId, route.routeIntent()), route);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void putAll(Set<ShardRouteModel> models) {
-        models.forEach(model -> localCache.put(model.shardId(), model));
+        models.forEach(model -> localCache.put(shardRoute(model.shardId(), model.routeIntent()), model));
 
         RedisSerializer<@NonNull String> keySerializer = (RedisSerializer<@NonNull String>) redisCache.getKeySerializer();
         RedisSerializer<@NonNull ShardRouteModel> valueSerializer = (RedisSerializer<@NonNull ShardRouteModel>) redisCache.getValueSerializer();
 
         redisCache.executePipelined((RedisCallback<Object>) connection ->{
             models.forEach(model -> {
-                byte[] key = keySerializer.serialize(shardRoute(model.shardId()));
+                byte[] key = keySerializer.serialize(shardRoute(model.shardId(), model.routeIntent()));
                 byte[] value = valueSerializer.serialize(model);
 
                 connection.stringCommands().set(key, value);
@@ -88,9 +95,9 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
     }
 
     @Override
-    public void remove(Integer shardId) {
-        localCache.remove(shardId);
-        redisCache.delete(shardRoute(shardId));
+    public void remove(Integer shardId, RouteIntent routeIntent) {
+        localCache.remove(shardRoute(shardId, routeIntent));
+        redisCache.delete(shardRoute(shardId, routeIntent));
     }
 
     @Override
@@ -103,7 +110,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
     }
 
     @Override
-    public Map<Integer, ShardRouteModel> getAll() {
+    public Map<String, ShardRouteModel> getAll() {
         return Map.copyOf(localCache);
     }
 

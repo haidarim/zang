@@ -16,11 +16,13 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static io.github.haidarim.shard.impl.control.cache.Cache.ALL_VIRTUAL_SHARD_KEYS;
 import static io.github.haidarim.shard.impl.control.cache.Cache.virtualShard;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
+import static io.github.haidarim.shard.utils.LockUtils.removeLock;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,7 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
     private final Map<VirtualShardMapId, VirtualShardModel> localCache = new ConcurrentHashMap<>();
     private final RedisTemplate<String, VirtualShardModel> redisCache;
     private final VirtualShardMapRepository repository;
-    private final Map<VirtualShardMapId, Object> locks = new ConcurrentHashMap<>();
+    private final Map<VirtualShardMapId, ReentrantLock> locks = new ConcurrentHashMap<>();
 
     @Override
     public VirtualShardModel getVirtualShard(Integer virtualId, ShardDomain domain) {
@@ -40,8 +42,9 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
             return model;
         }
 
-        Object lock = locks.computeIfAbsent(id, key -> new Object());
-        synchronized (lock) {
+        ReentrantLock lock = locks.computeIfAbsent(id, key -> new ReentrantLock());
+        lock.lock();
+        try{
             model = localCache.get(id);
             if (model != null){
                 return model;
@@ -54,6 +57,9 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
             }
 
             return fetchAndUpdateCache(id);
+        }finally {
+            lock.unlock();
+            removeLock(locks, id, lock);
         }
     }
 

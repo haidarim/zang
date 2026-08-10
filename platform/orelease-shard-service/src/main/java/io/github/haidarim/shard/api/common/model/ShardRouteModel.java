@@ -1,5 +1,6 @@
 package io.github.haidarim.shard.api.common.model;
 
+import io.github.haidarim.shard.api.common.type.RouteIntent;
 import lombok.Builder;
 
 import java.io.Serializable;
@@ -12,7 +13,8 @@ public record ShardRouteModel(
         String databaseName,
         String hostName,
         int port,
-        long topologyVersion
+        long topologyVersion,
+        RouteIntent routeIntent
 ) implements Serializable {
 
 }

@@ -7,12 +7,14 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static io.github.haidarim.shard.impl.control.cache.Cache.BATCH_SIZE;
 
 @Slf4j
-public class CacheUtils {
+public final class CacheUtils {
 
     public static <T> Set<String> getRedisKeys(RedisTemplate<String, T> redisTemplate, String keyPrefix){
         Set<String> keys = new HashSet<>();

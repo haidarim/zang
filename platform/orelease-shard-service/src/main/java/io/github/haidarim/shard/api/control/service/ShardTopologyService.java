@@ -9,7 +9,6 @@ import java.util.List;
 public interface ShardTopologyService {
 
 
-    ShardRouteModel getRoute(Integer shardId);
 
     void refresh();
 }

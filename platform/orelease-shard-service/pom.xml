@@ -135,7 +135,18 @@
         </dependency>
         <!-- END gRPC dependencies -->
 
-        <!-- START Redis dependency-->
+        <!-- START Caffeine dependency L1-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+        <!-- END Caffeine dependency L1-->
+
+        <!-- START Redis dependency, L2-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>

@@ -17,6 +17,8 @@ import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static io.github.haidarim.shard.impl.control.cache.Cache.*;
+
 
 @Configuration
 public class RedisConfig {

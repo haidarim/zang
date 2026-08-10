@@ -43,10 +43,6 @@ public class ShardTopologyServiceImpl implements ShardTopologyService {
         refresh();
     }
 
-    @Override
-    public ShardRouteModel getRoute(Integer shardId) {
-        return routeCacheManager.getRoute(shardId);
-    }
 
     @Override
     public void refresh() {
@@ -60,6 +56,6 @@ public class ShardTopologyServiceImpl implements ShardTopologyService {
         log.info("Updated node cache with {} nodes", nodeCacheManager.getAll().size());
         log.info("Updated virtual shards cache with {} virtualShards", virtualShardCacheManager.getAll().size());
 
-        eventPublisher.publishEvent(new TopologyRefreshedEvent(Map.copyOf(routeCacheManager.getAll())));
+//        eventPublisher.publishEvent(new TopologyRefreshedEvent(Map.copyOf(routeCacheManager.getAll())));
     }
 }

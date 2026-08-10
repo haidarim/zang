@@ -14,59 +14,68 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static io.github.haidarim.shard.impl.control.cache.Cache.ALL_SHARD_NODE_KEYS;
 import static io.github.haidarim.shard.impl.control.cache.Cache.shardNode;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
+import static io.github.haidarim.shard.utils.LockUtils.removeLock;
+import com.github.benmanes.caffeine.cache.Cache;
 
 @Service
 @RequiredArgsConstructor
 public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
 
-    private final Map<Long, ShardNodeModel> localCache = new ConcurrentHashMap<>();
+    private final Cache<@NonNull Long, ShardNodeModel> nodesByIdCache;
+    private final Cache<@NonNull Integer, Set<Long>> nodeIdsByShardId;
+
     private final RedisTemplate<String, ShardNodeModel> redisCache;
-    private final Map<Long, Object> locks = new ConcurrentHashMap<>();
+    private final Map<Long, ReentrantLock> locks = new ConcurrentHashMap<>();
     private final RedisCachePublisher redisPublisher;
     private final ShardNodeRepository repository;
 
     @Override
     public ShardNodeModel getNode(Long nodeId) {
-        ShardNodeModel model = localCache.get(nodeId);
+        ShardNodeModel model = nodesByIdCache.getIfPresent(nodeId);
         if(model != null){
             return model;
         }
 
-        Object lock = locks.computeIfAbsent(nodeId, key -> new Object());
-        synchronized (lock) {
-            model = localCache.get(nodeId);
+        ReentrantLock lock = locks.computeIfAbsent(nodeId, key -> new ReentrantLock());
+        lock.lock();
+        try {
+            model = nodesByIdCache.getIfPresent(nodeId);
             if(model != null){
                 return model;
             }
 
             model = redisCache.opsForValue().get(shardNode(nodeId));
             if (model != null) {
-                localCache.put(nodeId, model);
+                nodesByIdCache.put(nodeId, model);
                 return model;
             }
 
             return fetchFromDbAndUpdateCache(nodeId);
+        }finally {
+            lock.unlock();
+            removeLock(locks, nodeId, lock);
         }
     }
 
     @Override
     public void put(Long nodeId, ShardNodeModel model) {
-        localCache.put(nodeId, model);
+        nodesByIdCache.put(nodeId, model);
     }
 
     @Override
     public void putAll(Set<ShardNodeModel> models) {
-        models.forEach(model -> localCache.put(model.nodeId(), model));
+        models.forEach(model -> nodesByIdCache.put(model.nodeId(), model));
     }
 
     @Override
     public void remove(Long nodeId) {
-        localCache.remove(nodeId);
+        nodesByIdCache.(nodeId);
         redisCache.delete(shardNode(nodeId));
     }
 
