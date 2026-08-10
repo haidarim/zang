@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static io.github.haidarim.shard.cache.Cache.*;
+
 
 @Configuration
 public class RedisConfig {
@@ -57,6 +59,10 @@ public class RedisConfig {
             RedisCacheSubscriber cacheSubscriber
     ){
         Collection<PatternTopic> topics = new ArrayList<>();
+        topics.add(new PatternTopic(SHARD_NODE_CHANNEL));
+        topics.add(new PatternTopic(SHARD_MAP_CHANNEL));
+        topics.add(new PatternTopic(VIRTUAL_SHARD_CHANNEL));
+
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 
         container.setConnectionFactory(connectionFactory);

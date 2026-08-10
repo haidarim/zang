@@ -13,8 +13,8 @@ import lombok.*;
 @Table(
         name = "VIRTUAL_SHARD_MAP"
 )
-@EqualsAndHashCode
-public class VirtualShardMap {
+@EqualsAndHashCode(callSuper = false)
+public class VirtualShardMap extends BaseEntity{
     // Combo primary key
     @EmbeddedId
     private VirtualShardMapId id;
@@ -22,9 +22,6 @@ public class VirtualShardMap {
     @ManyToOne(
             fetch = FetchType.LAZY
     )
-    @Column(name = "SHARD_ID", nullable = false)
-    private ShardMap virtualShardMap;
-
-    @Column(name = "VERSION", nullable = false)
-    private Long version;
+    @JoinColumn(name = "SHARD_ID", nullable = false)
+    private ShardMap physicalShardMap;
 }

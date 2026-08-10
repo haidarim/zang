@@ -3,6 +3,7 @@ package io.github.haidarim.shard.impl.control.service;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.model.ShardRouteModel;
 import io.github.haidarim.shard.api.common.type.NodeRole;
+import io.github.haidarim.shard.api.common.type.NodeStatus;
 import io.github.haidarim.shard.api.control.command.NodeCommand;
 import io.github.haidarim.shard.api.control.command.RemoveNodeCommand;
 import io.github.haidarim.shard.api.control.service.ShardNodeService;
@@ -13,7 +14,7 @@ import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardMapRepository;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
 import io.github.haidarim.shard.cache.Cache;
-import io.github.haidarim.shard.cache.CacheMessage;
+import io.github.haidarim.shard.cache.message.CacheMessage;
 import io.github.haidarim.shard.cache.RedisCachePublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,7 +103,8 @@ public class ShardNodeServiceImpl implements ShardNodeService {
             throw new IllegalArgumentException("Port cannot be null");
         }
 
-        ShardNode primaryNode = shardNodeRepository.fetchByPrimaryNode(shardId).orElse(null);
+        ShardNode primaryNode = shardNodeRepository.fetchByShardIdAndStatusAndRole(shardId, NodeStatus.ONLINE, PRIMARY)
+                .orElse(null);
         if((role==null || PRIMARY.equals(role)) && primaryNode != null){
             throw new IllegalArgumentException("Primary node already exists");
         }

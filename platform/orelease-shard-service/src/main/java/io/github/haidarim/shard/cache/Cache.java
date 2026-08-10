@@ -2,17 +2,20 @@ package io.github.haidarim.shard.cache;
 
 public final class Cache {
 
-    static int BATCH_SIZE = 1000;
+    public static final int BATCH_SIZE = 1000;
 
-    static String REDIS_KEY_ROUTE_PREFIX = "shard:route:%d";
-    static String REDIS_KEY_VIRTUAL_SHARD_PREFIX = "shard:virtual:%s:%d";
-    static String REDIS_KEY_SHARD_NODE_PREFIX = "shard:node:%d";
+    public static final String REDIS_KEY_ROUTE_PREFIX = "shard:route:%d";
+    public static final String REDIS_KEY_VIRTUAL_SHARD_PREFIX = "shard:virtual:%s:%d";
+    public static final String REDIS_KEY_SHARD_NODE_PREFIX = "shard:node:%d";
 
-    static String ALL_ROUTE_KEYS = "shard:route:*";
-    static String ALL_VIRTUAL_SHARD_KEYS = "shard:virtual:*";
-    static String ALL_SHARD_NODE_KEYS = "shard:node:*";
+    public static final String ALL_ROUTE_KEYS = "shard:route:*";
+    public static final String ALL_VIRTUAL_SHARD_KEYS = "shard:virtual:*";
+    public static final String ALL_SHARD_NODE_KEYS = "shard:node:*";
 
-    static String SHARD_NODE_CHANNEL = "cache:shard-node";
+    public static final String SHARD_NODE_CHANNEL = "channel:shard-node";
+    public static final String SHARD_MAP_CHANNEL = "channel:shard-map";
+    public static final String VIRTUAL_SHARD_CHANNEL = "channel:virtual-shard";
+
 
     static String shardRoute(Integer shardId){
         return String.format(REDIS_KEY_ROUTE_PREFIX, shardId);
@@ -28,6 +31,7 @@ public final class Cache {
 
 
     public static enum CacheEntity {
+        SHARD_MAP,
         SHARD_NODE,
         SHARD_ROUTE,
         VIRTUAL_SHARD

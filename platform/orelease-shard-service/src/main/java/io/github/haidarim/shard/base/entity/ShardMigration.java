@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.github.haidarim.shard.api.common.type.MigrationStatus.COMPLETED;
+
 @Entity
 @Builder
 @Getter
@@ -17,8 +19,8 @@ import java.util.List;
 @Table(
         name = "SHARD_MIGRATION"
 )
-@EqualsAndHashCode
-public class ShardMigration {
+@EqualsAndHashCode(callSuper = false)
+public class ShardMigration extends BaseEntity {
 
     @Id
     @Column(name = "MIGRATION_ID")
@@ -54,8 +56,7 @@ public class ShardMigration {
     private Integer processPercent = 0;
 
     @Column(
-            name = "ERROR_MESSAGE",
-            nullable = false
+            name = "ERROR_MESSAGE"
     )
     private String errorMessage;
 
@@ -70,21 +71,8 @@ public class ShardMigration {
     )
     private Instant completedAt;
 
-    @Column(
-            name = "CREATED_AT",
-            nullable = false
-    )
-    private Instant createdAt = Instant.now();
-
-    @Column(
-            name = "UPDATED_AT",
-            nullable = false
-    )
-    private Instant updatedAt = Instant.now();
-
     @OneToMany(
             mappedBy = "migration",
-            cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<ShardLock> locks = new ArrayList<>();
@@ -93,5 +81,9 @@ public class ShardMigration {
         if (fromShardMap.getShardId().equals(toShardMap.getShardId())) {
             throw new IllegalArgumentException("FROM_SHARD and TO_SHARD must be different");
         }
+    }
+
+    public boolean isCompleted(){
+        return COMPLETED.equals(status);
     }
 }

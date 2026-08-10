@@ -9,7 +9,7 @@ import org.springframework.data.redis.core.ScanOptions;
 import java.util.HashSet;
 import java.util.Set;
 
-import static io.github.haidarim.shard.cache.CacheConstants.BATCH_SIZE;
+import static io.github.haidarim.shard.cache.Cache.BATCH_SIZE;
 
 @Slf4j
 public class CacheUtils {

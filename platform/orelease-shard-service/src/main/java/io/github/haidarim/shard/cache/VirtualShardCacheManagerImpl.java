@@ -13,13 +13,15 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static io.github.haidarim.shard.cache.CacheConstants.ALL_VIRTUAL_SHARD_KEYS;
-import static io.github.haidarim.shard.cache.CacheConstants.virtualShard;
+import static io.github.haidarim.shard.cache.Cache.ALL_VIRTUAL_SHARD_KEYS;
+import static io.github.haidarim.shard.cache.Cache.virtualShard;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
 
 @Service
@@ -109,10 +111,10 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
     private VirtualShardModel fetchAndUpdateCache(VirtualShardMapId id){
         VirtualShardMap map = repository.findById(id).orElseThrow(() -> new RuntimeException("No such entity found"));
         VirtualShardModel model = VirtualShardModel.builder()
-                .shardId(map.getVirtualShardMap().getShardId())
+                .shardId(map.getPhysicalShardMap().getShardId())
                 .virtualShardId(map.getId().getVirtualShardId())
                 .domain(map.getId().getDomain().name())
-                .version(map.getVirtualShardMap().getVersion())
+                .version(map.getPhysicalShardMap().getVersion())
                 .build();
 
         put(id.getVirtualShardId(), id.getDomain(), model);
@@ -121,16 +123,26 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
 
     @Override
     public void refresh(){
-        Set<VirtualShardModel> models = repository.findAll()
+        Set<VirtualShardModel> models = repository.findAllActiveMappings()
                 .stream()
                 .map(virtualShardMap -> VirtualShardModel.builder()
-                        .shardId(virtualShardMap.getVirtualShardMap().getShardId())
+                        .shardId(virtualShardMap.getPhysicalShardMap().getShardId())
                         .virtualShardId(virtualShardMap.getId().getVirtualShardId())
                         .domain(virtualShardMap.getId().getDomain().name())
-                        .version(virtualShardMap.getVirtualShardMap().getVersion())
+                        .version(virtualShardMap.getPhysicalShardMap().getVersion())
                         .build()
                 ).collect(Collectors.toSet());
 
         putAll(models);
+    }
+
+    @Override
+    public void applyForLocalCache(Set<VirtualShardModel> models){
+        models.forEach(model ->
+            localCache.put(
+                    new VirtualShardMapId(ShardDomain.valueOf(model.domain()), model.virtualShardId()),
+                    model
+            )
+        );
     }
 }

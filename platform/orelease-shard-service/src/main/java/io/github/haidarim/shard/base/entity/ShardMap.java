@@ -4,10 +4,6 @@ import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.api.common.type.ShardStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,8 +22,8 @@ import java.util.List;
         }
 )
 @ToString(onlyExplicitlyIncluded = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class ShardMap {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class ShardMap extends BaseEntity{
 
     @Id
     @GeneratedValue
@@ -59,34 +55,21 @@ public class ShardMap {
     @ToString.Include
     private Long version;
 
-    @CreatedDate
-    @Column(name = "CREATED_AT", nullable = false, updatable = false)
-    @ToString.Include
-    private Instant createdAt;
-
-    @LastModifiedDate
-    @Column(name = "UPDATED_AT", nullable = false)
-    @ToString.Include
-    private Instant updatedAt;
-
     // ShardMap referenced by ShardNode
     @OneToMany(
             mappedBy = "nodeShardMap",
-            cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<ShardNode> nodes = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "fromShardMap",
-            cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<ShardMigration> fromShardMigrations = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "toShardMap",
-            cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<ShardMigration> toShardMigrations = new ArrayList<>();
@@ -97,8 +80,7 @@ public class ShardMap {
     private ShardLock lock;
 
     @OneToMany(
-            mappedBy = "virtualShardMap",
-            cascade = CascadeType.ALL,
+            mappedBy = "physicalShardMap",
             orphanRemoval = true
     )
     private List<VirtualShardMap> virtualShardMaps = new ArrayList<>();

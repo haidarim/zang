@@ -4,9 +4,6 @@ package io.github.haidarim.shard.base.entity;
 import io.github.haidarim.shard.api.common.type.LockReason;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Columns;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 
@@ -19,9 +16,9 @@ import java.time.Instant;
 @Table(
         name = "SHARD_LOCK"
 )
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @ToString(onlyExplicitlyIncluded = true)
-public class ShardLock {
+public class ShardLock extends BaseEntity{
 
     @Id
     @GeneratedValue
@@ -49,7 +46,6 @@ public class ShardLock {
             updatable = false
     )
     @ToString.Include
-    @CreatedDate
     private Instant lockedAt;
 
     @Column(
@@ -72,9 +68,4 @@ public class ShardLock {
     @Column(name = "EXPIRES_AT", nullable = false)
     @ToString.Include
     private Instant expiresAt;
-
-    @Column(name = "UPDATED_AT", nullable = false)
-    @ToString.Include
-    @LastModifiedDate
-    private Instant updatedAt;
 }

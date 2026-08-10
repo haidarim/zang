@@ -1,8 +1,11 @@
 package io.github.haidarim.shard.cache;
 
+import io.github.haidarim.shard.cache.message.CacheMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import static io.github.haidarim.shard.cache.Cache.SHARD_NODE_CHANNEL;
 
 @Component
 @RequiredArgsConstructor
@@ -12,7 +15,7 @@ public class RedisCachePublisher {
 
     public void publish(CacheMessage message){
         redisTemplate.convertAndSend(
-                CacheConstants.SHARD_NODE_CHANNEL,
+                SHARD_NODE_CHANNEL,
                 message
         );
     }

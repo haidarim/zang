@@ -2,8 +2,6 @@ package io.github.haidarim.shard.impl.listener;
 
 
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
-import io.github.haidarim.shard.api.event.NodeCreatedEvent;
-import io.github.haidarim.shard.api.event.TopologyRefreshedEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import lombok.RequiredArgsConstructor;

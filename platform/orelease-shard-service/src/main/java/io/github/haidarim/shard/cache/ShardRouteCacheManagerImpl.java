@@ -13,12 +13,15 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static io.github.haidarim.shard.cache.CacheConstants.ALL_ROUTE_KEYS;
-import static io.github.haidarim.shard.cache.CacheConstants.shardRoute;
+import static io.github.haidarim.shard.api.common.type.NodeRole.PRIMARY;
+import static io.github.haidarim.shard.api.common.type.NodeStatus.ONLINE;
+import static io.github.haidarim.shard.cache.Cache.ALL_ROUTE_KEYS;
+import static io.github.haidarim.shard.cache.Cache.shardRoute;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
 
 /**
@@ -107,7 +110,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
 
     private ShardRouteModel fetchAndUpdateCache(Integer shardId){
         ShardNode primaryNode = shardNodeRepository
-                .fetchByPrimaryNode(shardId)
+                .fetchByShardIdAndStatusAndRole(shardId, ONLINE, PRIMARY)
                 .orElseThrow(()-> new IllegalArgumentException(ShardConstants.NO_SHARD_NODE_FOUND));
 
         ShardRouteModel model = ShardRouteModel.builder()
@@ -125,7 +128,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
 
     @Override
     public void refresh(){
-        Set<ShardRouteModel> models = shardNodeRepository.findAll()
+        Set<ShardRouteModel> models = shardNodeRepository.findAllOnlineAndPrimaryNodes()
                 .stream()
                 .map(node -> ShardRouteModel.builder()
                         .shardId(node.getNodeShardMap().getShardId())

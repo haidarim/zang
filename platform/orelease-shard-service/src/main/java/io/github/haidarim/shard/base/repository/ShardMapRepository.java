@@ -14,9 +14,10 @@ import java.util.Optional;
 @Repository
 public interface ShardMapRepository extends JpaRepository<@NonNull ShardMap, @NonNull Integer> {
 
-    @Query("SELECT shard FROM ShardMap shard WHERE shard.shardName = :shardName")
-    Optional<ShardMap> findByShardName(@Param("shardName") String shardName);
+    Optional<ShardMap> findByShardName(String shardName);
 
     @Query("SELECT shard FROM ShardMap shard WHERE shard.databaseName = :databaseName AND shard.domain = :domain")
-    Optional<List<ShardMap>> findShardsForDatabase(@Param("databaseName") String databaseName, @Param("domain") ShardDomain domain);
+    List<ShardMap> findShardsForDatabase(@Param("databaseName") String databaseName, @Param("domain") ShardDomain domain);
+
+    boolean existsByShardName(String shardName);
 }
