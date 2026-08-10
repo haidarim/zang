@@ -13,8 +13,6 @@ public interface VirtualShardCacheManager {
 
     void put(Integer virtualId, ShardDomain domain, VirtualShardModel model);
 
-    void putAll(Set<VirtualShardModel> virtualShardModelMap);
-
     void remove(VirtualShardMapId virtualId);
 
     void clear();
@@ -24,4 +22,6 @@ public interface VirtualShardCacheManager {
     void refresh();
 
     void applyForLocalCache(Set<VirtualShardModel> models);
+
+    void applyForSharedRedisCache(Set<VirtualShardModel> models);
 }

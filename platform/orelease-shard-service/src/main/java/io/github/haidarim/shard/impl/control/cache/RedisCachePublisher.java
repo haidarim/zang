@@ -1,11 +1,11 @@
-package io.github.haidarim.shard.cache;
+package io.github.haidarim.shard.impl.control.cache;
 
-import io.github.haidarim.shard.cache.message.CacheMessage;
+import io.github.haidarim.shard.impl.control.cache.message.CacheMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import static io.github.haidarim.shard.cache.Cache.SHARD_NODE_CHANNEL;
+import static io.github.haidarim.shard.impl.control.cache.Cache.SHARD_NODE_CHANNEL;
 
 @Component
 @RequiredArgsConstructor

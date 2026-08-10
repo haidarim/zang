@@ -1,14 +1,12 @@
 package io.github.haidarim.shard.config;
 
-import io.github.haidarim.shard.cache.RedisCacheSubscriber;
+import io.github.haidarim.shard.impl.control.cache.RedisCacheSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.listener.Topic;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import tools.jackson.databind.ObjectMapper;
@@ -18,9 +16,6 @@ import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-
-import static io.github.haidarim.shard.cache.Cache.*;
 
 
 @Configuration

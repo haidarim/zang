@@ -2,15 +2,14 @@ package io.github.haidarim.shard.impl.control.service;
 
 import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.api.control.service.VirtualShardService;
-import io.github.haidarim.shard.api.runtime.service.VirtualShardCacheManager;
+import io.github.haidarim.shard.api.event.VirtualShardCacheEvent;
 import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMapId;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
-import io.github.haidarim.shard.cache.Cache;
-import io.github.haidarim.shard.cache.RedisCachePublisher;
-import io.github.haidarim.shard.cache.message.VirtualShardCreatedCacheMessage;
+import io.github.haidarim.shard.impl.control.cache.Cache;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
@@ -23,8 +22,7 @@ import static io.github.haidarim.shard.api.common.constants.ShardConstants.VIRTU
 public class VirtualShardServiceImpl implements VirtualShardService {
 
     private final VirtualShardMapRepository virtualShardMapRepository;
-    private final RedisCachePublisher cachePublisher;
-    private final VirtualShardCacheManager virtualShardCacheManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -49,12 +47,11 @@ public class VirtualShardServiceImpl implements VirtualShardService {
                     .build()
             );
         }
-        virtualShardCacheManager.putAll(newCacheModels); // TODO do only for shared redis, local will be updated onmessage together with other instances
-        cachePublisher.publish(
-                new VirtualShardCreatedCacheMessage(
-                        Cache.CacheEntity.VIRTUAL_SHARD,
-                        Cache.CacheEventType.CREATED,
-                        newCacheModels
+
+        eventPublisher.publishEvent(
+                new VirtualShardCacheEvent(
+                        newCacheModels,
+                        Cache.CacheEventType.CREATED
                 )
         );
     }

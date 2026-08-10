@@ -1,5 +1,6 @@
 package io.github.haidarim.shard.api.runtime.service;
 
+import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 
 import java.util.Map;
@@ -11,7 +12,7 @@ public interface ShardNodeCacheManager {
 
     void put(Long nodeId, ShardNodeModel model);
 
-    void putAll(Set<ShardNodeModel> nodeModelMap);
+    void putAll(Set<ShardNodeModel> nodeModels);
 
     void remove(Long nodeId);
 
@@ -21,7 +22,11 @@ public interface ShardNodeCacheManager {
 
     void refresh();
 
-    void refreshLocal(Long nodeId);
+    void applyForSharedRedisCache(ShardMapModel model);
 
-    void removeLocal(Long nodeId);
+    void applyForSharedRedisCache(Set<ShardNodeModel> nodeModels);
+
+    void applyToLocalCache(ShardMapModel model);
+
+    void removeFromLocalCache(Long nodeId);
 }

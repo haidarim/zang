@@ -1,5 +1,6 @@
-package io.github.haidarim.shard.cache;
+package io.github.haidarim.shard.impl.control.cache;
 
+import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
@@ -15,9 +16,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static io.github.haidarim.shard.cache.Cache.ALL_SHARD_NODE_KEYS;
-import static io.github.haidarim.shard.cache.Cache.shardNode;
-import static io.github.haidarim.shard.cache.CacheConstants.*;
+import static io.github.haidarim.shard.impl.control.cache.Cache.ALL_SHARD_NODE_KEYS;
+import static io.github.haidarim.shard.impl.control.cache.Cache.shardNode;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
 
 @Service
@@ -57,27 +57,11 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     @Override
     public void put(Long nodeId, ShardNodeModel model) {
         localCache.put(nodeId, model);
-        redisCache.opsForValue().set(shardNode(nodeId), model);
-
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void putAll(Set<ShardNodeModel> models) {
         models.forEach(model -> localCache.put(model.nodeId(), model));
-
-        RedisSerializer<@NonNull String> keySerializer = (RedisSerializer<@NonNull String>) redisCache.getKeySerializer();
-        RedisSerializer<@NonNull ShardNodeModel> valueSerializer = (RedisSerializer<@NonNull ShardNodeModel>) redisCache.getValueSerializer();
-
-        redisCache.executePipelined((RedisCallback<Object>) connection -> {
-            models.forEach(model -> {
-                byte[] key = keySerializer.serialize(shardNode(model.nodeId()));
-                byte[] value= valueSerializer.serialize(model);
-
-                connection.stringCommands().set(key, value);
-            });
-            return null;
-        });
     }
 
     @Override
@@ -137,16 +121,38 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
                         .build()
                 ).collect(Collectors.toSet());
 
-        putAll(nodes);
+        applyForSharedRedisCache(nodes);
     }
 
     @Override
-    public void refreshLocal(Long nodeId) {
+    @SuppressWarnings("unchecked")
+    public void applyForSharedRedisCache(Set<ShardNodeModel> models){
+        RedisSerializer<@NonNull String> keySerializer = (RedisSerializer<@NonNull String>) redisCache.getKeySerializer();
+        RedisSerializer<@NonNull ShardNodeModel> valueSerializer = (RedisSerializer<@NonNull ShardNodeModel>) redisCache.getValueSerializer();
+
+        redisCache.executePipelined((RedisCallback<Object>) connection -> {
+            models.forEach(model -> {
+                byte[] key = keySerializer.serialize(shardNode(model.nodeId()));
+                byte[] value= valueSerializer.serialize(model);
+
+                connection.stringCommands().set(key, value);
+            });
+            return null;
+        });
+    }
+
+    @Override
+    public void applyForSharedRedisCache(ShardMapModel model){
 
     }
 
     @Override
-    public void removeLocal(Long nodeId) {
+    public void applyToLocalCache(ShardMapModel model){
+
+    }
+
+    @Override
+    public void removeFromLocalCache(Long nodeId) {
 
     }
 }

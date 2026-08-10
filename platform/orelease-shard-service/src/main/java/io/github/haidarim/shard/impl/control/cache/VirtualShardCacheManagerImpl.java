@@ -1,4 +1,4 @@
-package io.github.haidarim.shard.cache;
+package io.github.haidarim.shard.impl.control.cache;
 
 import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.api.common.type.ShardDomain;
@@ -13,15 +13,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static io.github.haidarim.shard.cache.Cache.ALL_VIRTUAL_SHARD_KEYS;
-import static io.github.haidarim.shard.cache.Cache.virtualShard;
+import static io.github.haidarim.shard.impl.control.cache.Cache.ALL_VIRTUAL_SHARD_KEYS;
+import static io.github.haidarim.shard.impl.control.cache.Cache.virtualShard;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
 
 @Service
@@ -64,28 +62,6 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
         VirtualShardMapId id = new VirtualShardMapId(domain, virtualId);
         localCache.put(id, model);
         redisCache.opsForValue().set(virtualShard(domain.name(), virtualId), model);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void putAll(Set<VirtualShardModel> models) {
-        models.forEach(model -> {
-            localCache.put(
-                    new VirtualShardMapId(ShardDomain.valueOf(model.domain()), model.virtualShardId()), model);
-        });
-
-        RedisSerializer<@NonNull String> keySerializer = (RedisSerializer<@NonNull String>) redisCache.getKeySerializer();
-        RedisSerializer<@NonNull VirtualShardModel> valueSerializer = (RedisSerializer<@NonNull VirtualShardModel>) redisCache.getValueSerializer();
-        redisCache.executePipelined((RedisCallback<Object>) connection -> {
-            models.forEach(model -> {
-                byte[] key = keySerializer.serialize(virtualShard(model.domain(),  model.virtualShardId()));
-
-                byte[] value = valueSerializer.serialize(model);
-
-                connection.stringCommands().set(key, value);
-            });
-            return null;
-        });
     }
 
     @Override
@@ -133,7 +109,7 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
                         .build()
                 ).collect(Collectors.toSet());
 
-        putAll(models);
+        applyForSharedRedisCache(models);
     }
 
     @Override
@@ -144,5 +120,22 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
                     model
             )
         );
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void applyForSharedRedisCache(Set<VirtualShardModel> models){
+        RedisSerializer<@NonNull String> keySerializer = (RedisSerializer<@NonNull String>) redisCache.getKeySerializer();
+        RedisSerializer<@NonNull VirtualShardModel> valueSerializer = (RedisSerializer<@NonNull VirtualShardModel>) redisCache.getValueSerializer();
+        redisCache.executePipelined((RedisCallback<Object>) connection -> {
+            models.forEach(model -> {
+                byte[] key = keySerializer.serialize(virtualShard(model.domain(),  model.virtualShardId()));
+
+                byte[] value = valueSerializer.serialize(model);
+
+                connection.stringCommands().set(key, value);
+            });
+            return null;
+        });
     }
 }

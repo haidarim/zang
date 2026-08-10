@@ -1,10 +1,11 @@
-package io.github.haidarim.shard.cache;
+package io.github.haidarim.shard.impl.control.cache;
 
+import io.github.haidarim.shard.api.event.CacheEvent;
+import io.github.haidarim.shard.api.event.VirtualShardCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
 import io.github.haidarim.shard.api.runtime.service.VirtualShardCacheManager;
-import io.github.haidarim.shard.cache.message.CacheMessage;
-import io.github.haidarim.shard.cache.message.VirtualShardCreatedCacheMessage;
+import io.github.haidarim.shard.impl.control.cache.message.CacheMessage;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -13,7 +14,7 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-import static io.github.haidarim.shard.cache.Cache.CacheEventType.CREATED;
+import static io.github.haidarim.shard.impl.control.cache.Cache.CacheEventType.CREATED;
 
 @Component
 @RequiredArgsConstructor
@@ -27,14 +28,12 @@ public class RedisCacheSubscriber implements MessageListener {
     @Override
     public void onMessage(@NonNull Message message, byte @Nullable [] pattern) {
 
-        CacheMessage cacheMessage = mapper.readValue(
-                message.getBody(),
-                CacheMessage.class
-        );
+        CacheEvent event = mapper.readValue(message.getBody(), CacheMessage.class).getEvent();
 
-        switch (cacheMessage.getEntity()) {
+
+        switch (event.getEntity()) {
             case VIRTUAL_SHARD -> {
-                handleVirtualShardCacheMessage(cacheMessage);
+                handleVirtualShardCacheMessage(event);
                 break;
             }
             case SHARD_MAP -> {
@@ -46,26 +45,25 @@ public class RedisCacheSubscriber implements MessageListener {
                 break;
             }
             default -> {
-                throw new IllegalArgumentException("Unknown Message Entity: " + cacheMessage.getEntity());
+                throw new IllegalArgumentException("Unknown Message Entity: " + event.getEntity());
             }
         }
     }
 
-    private void handleVirtualShardCacheMessage(CacheMessage cacheMessage){
-        if (CREATED.equals(cacheMessage.getEventType())){
-            handleVirtualShardCreatedMessage(cacheMessage);
+    private void handleVirtualShardCacheMessage(CacheEvent event){
+        if (CREATED.equals(event.getEventType())){
+            handleVirtualShardCreatedMessage(event);
         }
 
     }
 
-    private void handleVirtualShardCreatedMessage(CacheMessage cacheMessage){
-        if (cacheMessage instanceof VirtualShardCreatedCacheMessage){
+    private void handleVirtualShardCreatedMessage(CacheEvent event){
+        if (event instanceof VirtualShardCacheEvent){
             virtualShardCacheManager.applyForLocalCache(
-                    ((VirtualShardCreatedCacheMessage) cacheMessage).getModels()
+                    ((VirtualShardCacheEvent) event).getModels()
             );
-
             return;
         }
-        throw new IllegalArgumentException("Message not instance of handleVirtualShardCreatedMessage")
+        throw new IllegalArgumentException("Message not instance of handleVirtualShardCreatedMessage");
     }
 }

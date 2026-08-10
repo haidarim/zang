@@ -1,4 +1,4 @@
-package io.github.haidarim.shard.cache;
+package io.github.haidarim.shard.impl.control.cache;
 
 public final class Cache {
 
