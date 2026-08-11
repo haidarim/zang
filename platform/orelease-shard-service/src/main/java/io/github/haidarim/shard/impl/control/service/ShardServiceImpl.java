@@ -8,7 +8,7 @@ import io.github.haidarim.shard.api.control.service.VirtualShardService;
 import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.base.repository.*;
-import io.github.haidarim.shard.impl.control.cache.Cache;
+import io.github.haidarim.shard.impl.control.cache.CacheProperty;
 import io.github.haidarim.shard.exception.ShardNotFoundException;
 import io.github.haidarim.shard.exception.ShardValidationException;
 import lombok.RequiredArgsConstructor;
@@ -90,7 +90,7 @@ public class ShardServiceImpl implements ShardService {
             eventPublisher.publishEvent(
                     new ShardMapCacheEvent(
                             modelBuilder.shardId(shard.getShardId()).build(),
-                            Cache.CacheEventType.UPDATED
+                            CacheProperty.CacheEventType.UPDATED
                     )
             );
         }

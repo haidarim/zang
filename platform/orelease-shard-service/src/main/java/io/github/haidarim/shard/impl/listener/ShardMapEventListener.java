@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import static io.github.haidarim.shard.impl.control.cache.Cache.CacheEventType.UPDATED;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.UPDATED;
 
 @Component
 @RequiredArgsConstructor

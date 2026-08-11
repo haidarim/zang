@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 
 import static io.github.haidarim.shard.api.common.type.NodeRole.PRIMARY;
 import static io.github.haidarim.shard.api.common.type.NodeStatus.ONLINE;
-import static io.github.haidarim.shard.impl.control.cache.Cache.ALL_ROUTE_KEYS;
-import static io.github.haidarim.shard.impl.control.cache.Cache.shardRoute;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.ALL_ROUTE_KEYS;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.shardRoute;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
 import static io.github.haidarim.shard.utils.LockUtils.removeLock;
 

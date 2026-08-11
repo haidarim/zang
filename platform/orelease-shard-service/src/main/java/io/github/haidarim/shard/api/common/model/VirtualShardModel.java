@@ -1,14 +1,22 @@
 package io.github.haidarim.shard.api.common.model;
 
+import io.github.haidarim.shard.api.common.type.ShardDomain;
+import io.github.haidarim.shard.base.entity.VirtualShardMapId;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.io.Serializable;
 
 @Builder
-public record VirtualShardModel(
-        Integer virtualShardId,
-        String domain,
-        Integer shardId,
-        Long version
-) implements Serializable {
+@Getter
+public class VirtualShardModel extends CacheModel<VirtualShardMapId> implements Serializable {
+    private final Integer virtualShardId;
+    private final String domain;
+    private final Integer shardId;
+    private final Long version;
+
+    @Override
+    public VirtualShardMapId getIdentifier() {
+        return new VirtualShardMapId(ShardDomain.valueOf(domain), virtualShardId);
+    }
 }

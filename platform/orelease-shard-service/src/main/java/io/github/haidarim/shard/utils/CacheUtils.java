@@ -1,5 +1,7 @@
 package io.github.haidarim.shard.utils;
 
+import io.github.haidarim.shard.api.common.model.CacheModel;
+import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.Cursor;
@@ -9,9 +11,9 @@ import org.springframework.data.redis.core.ScanOptions;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
-import static io.github.haidarim.shard.impl.control.cache.Cache.BATCH_SIZE;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.BATCH_SIZE;
 
 @Slf4j
 public final class CacheUtils {
@@ -32,5 +34,17 @@ public final class CacheUtils {
         }
 
         return keys;
+    }
+
+    public static <I, M extends CacheModel<I>> Map<Integer, Set<I>> toShardIndexMap(Set<M> models){
+        return models
+                .stream()
+                .collect(Collectors.groupingBy(
+                        CacheModel::getShardId,
+                        Collectors.mapping(
+                                CacheModel::getModelIdentifier,
+                                Collectors.toSet()
+                        )
+                ));
     }
 }

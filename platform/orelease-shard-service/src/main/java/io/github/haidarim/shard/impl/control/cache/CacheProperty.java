@@ -2,7 +2,7 @@ package io.github.haidarim.shard.impl.control.cache;
 
 import io.github.haidarim.shard.api.common.type.RouteIntent;
 
-public final class Cache {
+public final class CacheProperty {
 
     public static final int BATCH_SIZE = 1000;
 
@@ -14,6 +14,7 @@ public final class Cache {
     public static final String ALL_ROUTE_KEYS = "shard:route:*";
     public static final String ALL_VIRTUAL_SHARD_KEYS = "shard:virtual:*";
     public static final String ALL_SHARD_NODE_KEYS = "shard:node:*";
+    public static final String ALL_SHARD_NODE_INDEX_KEYS = "shard:nodes:*";
 
     public static final String SHARD_NODE_CHANNEL = "channel:shard-node";
     public static final String SHARD_MAP_CHANNEL = "channel:shard-map";

@@ -7,7 +7,7 @@ import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMapId;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
-import io.github.haidarim.shard.impl.control.cache.Cache;
+import io.github.haidarim.shard.impl.control.cache.CacheProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -51,7 +51,7 @@ public class VirtualShardServiceImpl implements VirtualShardService {
         eventPublisher.publishEvent(
                 new VirtualShardCacheEvent(
                         newCacheModels,
-                        Cache.CacheEventType.CREATED
+                        CacheProperty.CacheEventType.CREATED
                 )
         );
     }

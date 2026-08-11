@@ -14,7 +14,7 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-import static io.github.haidarim.shard.impl.control.cache.Cache.CacheEventType.CREATED;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.CREATED;
 
 @Component
 @RequiredArgsConstructor

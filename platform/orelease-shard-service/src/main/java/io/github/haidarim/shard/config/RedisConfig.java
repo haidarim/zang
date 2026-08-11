@@ -1,6 +1,10 @@
 package io.github.haidarim.shard.config;
 
+import io.github.haidarim.shard.api.common.model.ShardNodeModel;
+import io.github.haidarim.shard.api.common.model.ShardRouteModel;
+import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.impl.control.cache.RedisCacheSubscriber;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -8,6 +12,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
@@ -17,37 +23,63 @@ import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static io.github.haidarim.shard.impl.control.cache.Cache.*;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.*;
 
 
 @Configuration
 public class RedisConfig {
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory){
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+    public StringRedisSerializer redisStringSerializer(){
+        return new StringRedisSerializer();
+    }
 
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
+    @Bean
+    public RedisTemplate<String, VirtualShardModel> virtualShardRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                new JacksonJsonRedisSerializer<>(VirtualShardModel.class)
+        );
+    }
 
-        // String serializer for Keys
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+    @Bean
+    public RedisTemplate<String, ShardNodeModel> shardNodeRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                new JacksonJsonRedisSerializer<>(ShardNodeModel.class)
+        );
+    }
 
-        // JSON serializer for values
-        PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
-                .allowIfBaseType(Object.class)
-                .build();
+    @Bean
+    public RedisTemplate<String, ShardRouteModel> shardRouteRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                new JacksonJsonRedisSerializer<>(ShardRouteModel.class)
+        );
+    }
 
-        ObjectMapper objectMapper = JsonMapper.builder()
-                .activateDefaultTyping(ptv)
-                .build();
-
-        GenericJacksonJsonRedisSerializer jsonSerializer = new GenericJacksonJsonRedisSerializer(objectMapper);
-        redisTemplate.setValueSerializer(jsonSerializer);
-        redisTemplate.setHashValueSerializer(jsonSerializer);
-
-        redisTemplate.afterPropertiesSet();
-        return redisTemplate;
+    @Bean
+    public RedisTemplate<String, String> shardIndexRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                redisStringSerializer
+        );
     }
 
     @Bean
@@ -69,5 +101,25 @@ public class RedisConfig {
         );
 
         return container;
+    }
+
+    private <V> RedisTemplate<String, V> createTemplate(
+            RedisConnectionFactory connectionFactory,
+            StringRedisSerializer keySerializer,
+            RedisSerializer<@NonNull V> valueSerializer
+    ){
+        RedisTemplate<String, V> redisTemplate = new RedisTemplate<>();
+
+        redisTemplate.setConnectionFactory(connectionFactory);
+
+        redisTemplate.setKeySerializer(keySerializer);
+        redisTemplate.setHashKeySerializer(keySerializer);
+
+        redisTemplate.setValueSerializer(valueSerializer);
+        redisTemplate.setHashValueSerializer(valueSerializer);
+
+        redisTemplate.afterPropertiesSet();
+
+        return redisTemplate;
     }
 }

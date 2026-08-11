@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import static io.github.haidarim.shard.impl.control.cache.Cache.SHARD_NODE_CHANNEL;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.SHARD_NODE_CHANNEL;
 
 @Component
 @RequiredArgsConstructor

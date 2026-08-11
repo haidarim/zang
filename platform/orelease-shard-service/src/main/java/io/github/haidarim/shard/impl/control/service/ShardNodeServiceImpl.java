@@ -13,7 +13,7 @@ import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardMapRepository;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
-import io.github.haidarim.shard.impl.control.cache.Cache;
+import io.github.haidarim.shard.impl.control.cache.CacheProperty;
 import io.github.haidarim.shard.impl.control.cache.message.CacheMessage;
 import io.github.haidarim.shard.impl.control.cache.RedisCachePublisher;
 import lombok.RequiredArgsConstructor;
@@ -51,8 +51,8 @@ public class ShardNodeServiceImpl implements ShardNodeService {
         nodeCacheManager.put(nodeModel.nodeId(), nodeModel);
         cachePublisher.publish(
                 new CacheMessage(
-                        Cache.CacheEntity.SHARD_NODE,
-                        Cache.CacheEventType.CREATED,
+                        CacheProperty.CacheEntity.SHARD_NODE,
+                        CacheProperty.CacheEventType.CREATED,
                         nodeModel.nodeId()
                 )
         );
@@ -64,8 +64,8 @@ public class ShardNodeServiceImpl implements ShardNodeService {
             routeCacheManager.put(routeModel.shardId(), routeModel);
             cachePublisher.publish(
                     new CacheMessage(
-                            Cache.CacheEntity.SHARD_ROUTE,
-                            Cache.CacheEventType.UPDATED,
+                            CacheProperty.CacheEntity.SHARD_ROUTE,
+                            CacheProperty.CacheEventType.UPDATED,
                             routeModel.shardId()
                     )
             );

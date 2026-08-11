@@ -19,8 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static io.github.haidarim.shard.impl.control.cache.Cache.ALL_VIRTUAL_SHARD_KEYS;
-import static io.github.haidarim.shard.impl.control.cache.Cache.virtualShard;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.ALL_VIRTUAL_SHARD_KEYS;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.virtualShard;
 import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
 import static io.github.haidarim.shard.utils.LockUtils.removeLock;
 

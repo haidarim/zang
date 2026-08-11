@@ -9,7 +9,7 @@ public interface ShardNodeCacheManager {
 
     ShardNodeModel getNode(Long nodeId);
 
-    Set<ShardNodeModel> getNodes(Integer shardId, String hostName, int port);
+    Set<ShardNodeModel> getNodes(Integer shardId);
 
     void removeFromCaffeine(Long nodeId);
 
@@ -21,13 +21,10 @@ public interface ShardNodeCacheManager {
 
     void refresh();
 
-    void applyToSharedRedisCache(ShardMapModel model);
+    void applyToSharedRedisCaches(ShardNodeModel model);
+    void applyToSharedRedisCaches(Set<ShardNodeModel> nodeModels);
 
-    void applyToSharedRedisCache(Set<ShardNodeModel> nodeModels);
-
-    void applyToCaffeineCache(ShardMapModel model);
-
-    void applyToCaffeineCache(Set<ShardNodeModel> nodeModels);
+    void applyToCaffeineCaches(Set<ShardNodeModel> nodeModels);
 
     void removeFromRedisCache(Long nodeId);
 }
