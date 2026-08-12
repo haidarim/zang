@@ -72,6 +72,8 @@ public final class CacheUtils {
     public static ShardRouteModel mapToRouteModel(ShardNodeModel nodeModel){
         return ShardRouteModel.builder()
                 .shardId(nodeModel.getShardId())
+                .nodeId(nodeModel.getNodeId())
+                .role(nodeModel.getRole())
                 .shardName(nodeModel.getShardName())
                 .databaseName(nodeModel.getDatabaseName())
                 .hostName(nodeModel.getHostName())

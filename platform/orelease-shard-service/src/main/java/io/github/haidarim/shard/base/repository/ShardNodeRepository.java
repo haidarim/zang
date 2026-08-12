@@ -34,5 +34,8 @@ public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @
     @Query("SELECT node FROM ShardNode node WHERE node.nodeStatus = 'ONLINE' AND node.nodeRole = 'PRIMARY'")
     List<ShardNode> findAllOnlineAndPrimaryNodes();
 
+    @Query("SELECT node FROM ShardNode node WHERE node.nodeStatus = 'ONLINE' AND node.nodeRole = 'REPLICA'")
+    List<ShardNode> findAllOnlineAndReplicaNodes();
+
     List<ShardNode> findByNodeShardMap_ShardId(Integer shardId);
 }
