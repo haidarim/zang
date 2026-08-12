@@ -1,13 +1,17 @@
 package io.github.haidarim.shard.impl.listener;
 
 import io.github.haidarim.shard.api.common.model.ShardMapModel;
+import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
+import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.impl.control.cache.RedisCachePublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.Set;
 
 import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.UPDATED;
 
@@ -32,7 +36,13 @@ public class ShardMapEventListener {
     }
 
     private void updateLocalRedisNodesAndUpdateOthers(ShardMapModel model){
-        nodeCacheManager.
+
+        Set<ShardNodeModel> nodeModels =  nodeCacheManager.getNodes(model.getShardId());
+        if (nodeModels.isEmpty()){
+            return;
+        }
+
+        nodeCacheManager.app
     }
 
     private void updateLocalRedisRoutesAndUpdateOthers(ShardMapModel model){

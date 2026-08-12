@@ -3,11 +3,13 @@ package io.github.haidarim.shard.impl.control.cache;
 import io.github.haidarim.shard.api.common.model.CacheModel;
 import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
+import io.github.haidarim.shard.api.event.NodeCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -44,7 +46,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     private final Map<Integer, ReentrantLock> shardLocks = new ConcurrentHashMap<>();
 
 
-    private final RedisCachePublisher redisPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Override
@@ -111,7 +113,10 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
                 shardIndexCache.put(shardId, nodeIds);
 
                 // L2 - resolve actual node models
-                return getModelsFromRedisCache(nodeIds);
+                Set<ShardNodeModel> models = getModelsFromRedisCache(nodeIds);
+                if (!models.isEmpty()){
+                    return models;
+                }
             }
 
             // L3
@@ -183,9 +188,12 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
                 model.getNodeId().toString()
         );
 
-        // TODO send event
+        eventPublisher.publishEvent(
+                new NodeCacheEvent(Set.of(model), CacheEventType.CREATED)
+        );
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void applyToSharedRedisCaches(Set<ShardNodeModel> models){
         if (models == null || models.isEmpty()){
@@ -210,14 +218,29 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
                         )
                 ));
 
-        shardIndexValues.forEach((shardId, nodeIds) -> {
-            shardIndexRedisCache.opsForSet().add(
-              shardNodeByShardId(shardId),
-              nodeIds.toArray(String[]::new)
-            );
+        shardIndexRedisCache.executePipelined((RedisCallback<Object>) connection -> {
+            RedisSerializer<@NonNull String> keySerializer = (RedisSerializer<@NonNull String>) shardIndexRedisCache.getKeySerializer();
+
+            shardIndexValues.forEach((shardId, nodeIds) -> {
+                byte[] rawKey = keySerializer.serialize(shardNodeByShardId(shardId));
+
+                connection.keyCommands().del(rawKey);
+
+                byte[][] rawMembers = nodeIds.stream()
+                        .map(id -> id.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                        .toArray(byte[][]::new);
+
+                connection.setCommands().sAdd(rawKey, rawMembers);
+            });
+            return null;
         });
 
-        // TODO send event
+        eventPublisher.publishEvent(
+                new NodeCacheEvent(
+                        models,
+                        CacheEventType.CREATED
+                )
+        );
     }
 
     @Override
@@ -235,6 +258,10 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     @Override
     public void removeFromRedisCache(Long nodeId) {
         ShardNodeModel model = nodeRedisCache.opsForValue().get(shardNode(nodeId));
+        if (model == null){
+            model = nodeCache.getIfPresent(nodeId);
+        }
+
         nodeRedisCache.delete(shardNode(nodeId));
 
         if (model != null) {
