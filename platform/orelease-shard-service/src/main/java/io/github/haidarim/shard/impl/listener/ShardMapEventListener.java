@@ -4,7 +4,6 @@ import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
-import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.impl.control.cache.RedisCachePublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +23,9 @@ public class ShardMapEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEvent(ShardMapCacheEvent event){
         ShardMapModel model = event.getModel();
+        if (model == null){
+            return;
+        }
 
         if(UPDATED.equals(event.getEventType())) {
             // Nodes
@@ -42,7 +44,12 @@ public class ShardMapEventListener {
             return;
         }
 
-        nodeCacheManager.app
+        nodeModels.forEach(m -> {
+            m.setShardVersion(model.getVersion());
+            m.setDatabaseName(model.getDatabaseName() != null ? model.getDatabaseName() : m.getDatabaseName());
+            m.setDomain(model.getDomain() != null ? model.getDomain() : m.getDomain());
+        });
+        nodeCacheManager.applyToSharedRedisCaches(nodeModels);
     }
 
     private void updateLocalRedisRoutesAndUpdateOthers(ShardMapModel model){
@@ -52,5 +59,4 @@ public class ShardMapEventListener {
     private void updateLocalRedisVirtualShardsAndUpdateOthers(ShardMapModel model){
 
     }
-
 }

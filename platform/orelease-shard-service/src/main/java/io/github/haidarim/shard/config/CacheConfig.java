@@ -2,6 +2,7 @@ package io.github.haidarim.shard.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
+import io.github.haidarim.shard.api.common.model.ShardRouteModel;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +26,24 @@ public class CacheConfig {
     @Bean
     public Cache<@NonNull Integer, Set<Long>> shardNodeIdByShardIdCache(
             @Value("${caffeine.node-cache-by-id.max-size}") long  maxsize
+    ){
+        return Caffeine.newBuilder()
+                .maximumSize(maxsize)
+                .build();
+    }
+
+    @Bean
+    public Cache<@NonNull Integer, ShardRouteModel> primaryRouteCache(
+            @Value("${caffeine.primary-route-cache.max-size}") long  maxsize
+    ){
+        return Caffeine.newBuilder()
+                .maximumSize(maxsize)
+                .build();
+    }
+
+    @Bean
+    public Cache<@NonNull Integer, Set<ShardRouteModel>> replicaRouteCache(
+            @Value("${caffeine.replica-route-cache.max-size}") long  maxsize
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)

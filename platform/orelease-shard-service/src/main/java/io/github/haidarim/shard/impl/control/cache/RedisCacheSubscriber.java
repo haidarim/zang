@@ -14,7 +14,7 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.CREATED;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.REPAIR;
 
 @Component
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class RedisCacheSubscriber implements MessageListener {
     }
 
     private void handleVirtualShardCacheMessage(CacheEvent event){
-        if (CREATED.equals(event.getEventType())){
+        if (REPAIR.equals(event.getEventType())){
             handleVirtualShardCreatedMessage(event);
         }
 

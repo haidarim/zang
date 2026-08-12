@@ -96,7 +96,8 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
                 .shardId(map.getPhysicalShardMap().getShardId())
                 .virtualShardId(map.getId().getVirtualShardId())
                 .domain(map.getId().getDomain().name())
-                .version(map.getPhysicalShardMap().getVersion())
+                .virtualVersion(map.getVersion())
+                .shardVersion(map.getPhysicalShardMap().getVersion())
                 .build();
 
         put(id.getVirtualShardId(), id.getDomain(), model);
@@ -111,7 +112,8 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
                         .shardId(virtualShardMap.getPhysicalShardMap().getShardId())
                         .virtualShardId(virtualShardMap.getId().getVirtualShardId())
                         .domain(virtualShardMap.getId().getDomain().name())
-                        .version(virtualShardMap.getPhysicalShardMap().getVersion())
+                        .virtualVersion(virtualShardMap.getVersion())
+                        .shardVersion(virtualShardMap.getPhysicalShardMap().getVersion())
                         .build()
                 ).collect(Collectors.toSet());
 

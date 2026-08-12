@@ -23,7 +23,7 @@ public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @
            AND node.nodeStatus = :status
            AND node.nodeRole = :role
            """)
-    Optional<ShardNode> fetchByShardIdAndStatusAndRole(
+    List<ShardNode> fetchByShardIdAndStatusAndRole(
             @Param("shardId") Integer shardId,
             @Param("status") NodeStatus status,
             @Param("role") NodeRole role

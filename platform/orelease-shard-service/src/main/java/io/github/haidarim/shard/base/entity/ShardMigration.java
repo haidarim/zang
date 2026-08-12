@@ -19,12 +19,15 @@ import static io.github.haidarim.shard.api.common.type.MigrationStatus.COMPLETED
 @Table(
         name = "SHARD_MIGRATION"
 )
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@ToString(onlyExplicitlyIncluded = true)
 public class ShardMigration extends BaseEntity {
 
     @Id
     @Column(name = "MIGRATION_ID")
     @GeneratedValue
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private Long migrationId;
 
 
@@ -47,17 +50,20 @@ public class ShardMigration extends BaseEntity {
             nullable = false
     )
     @Enumerated(EnumType.STRING)
+    @ToString.Include
     private MigrationStatus status = MigrationStatus.STARTED;
 
     @Column(
             name = "PROGRESS_PERCENT",
             nullable = false
     )
+    @ToString.Include
     private Integer processPercent = 0;
 
     @Column(
             name = "ERROR_MESSAGE"
     )
+    @ToString.Include
     private String errorMessage;
 
     @Column(
@@ -70,6 +76,11 @@ public class ShardMigration extends BaseEntity {
             name = "COMPLETED_AT"
     )
     private Instant completedAt;
+
+    @Version
+    @Column(name = "VERSION", nullable = false)
+    @ToString.Include
+    private Long version;
 
     @OneToMany(
             mappedBy = "migration",

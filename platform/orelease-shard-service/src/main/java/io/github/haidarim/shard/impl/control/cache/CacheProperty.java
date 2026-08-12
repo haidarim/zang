@@ -6,7 +6,7 @@ public final class CacheProperty {
 
     public static final int BATCH_SIZE = 1000;
 
-    public static final String REDIS_KEY_ROUTE_PREFIX = "shard:route:%d:%s";
+    public static final String REDIS_KEY_ROUTE_PREFIX = "shard:route:%d";
     public static final String REDIS_KEY_VIRTUAL_SHARD_PREFIX = "shard:virtual:%s:%d";
     public static final String REDIS_KEY_SHARD_NODE_PREFIX = "shard:node:%d";
     public static final String REDIS_KEY_SHARD_NODE_BY_SHARD_ID = "shard:nodes:%d";
@@ -21,8 +21,8 @@ public final class CacheProperty {
     public static final String VIRTUAL_SHARD_CHANNEL = "channel:virtual-shard";
 
 
-    static String shardRoute(Integer shardId, RouteIntent routeIntent){
-        return String.format(REDIS_KEY_ROUTE_PREFIX, shardId, routeIntent.name());
+    static String shardRoute(Integer shardId){
+        return String.format(REDIS_KEY_ROUTE_PREFIX, shardId);
     }
 
     static String virtualShard(String domain, Integer virtualShardId){
@@ -44,7 +44,7 @@ public final class CacheProperty {
     }
 
     public static enum CacheEventType {
-        CREATED,
+        REPAIR,
         UPDATED,
         DELETED,
         REFRESH

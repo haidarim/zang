@@ -87,9 +87,15 @@ public class ShardServiceImpl implements ShardService {
         }
 
         if (modelBuilder != null){
+            shardMapRepository.saveAndFlush(shard);
+
             eventPublisher.publishEvent(
                     new ShardMapCacheEvent(
-                            modelBuilder.shardId(shard.getShardId()).build(),
+                            modelBuilder
+                                    .shardId(shard.getShardId())
+                                    .shardName(shard.getShardName())
+                                    .version(shard.getVersion())
+                                    .build(),
                             CacheProperty.CacheEventType.UPDATED
                     )
             );

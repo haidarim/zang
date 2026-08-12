@@ -11,17 +11,20 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(
         name = "SHARD_NODE",
         uniqueConstraints = {
                 @UniqueConstraint(name = "shard_map_id_host_port_uk", columnNames = {"SHARD_MAP_ID", "HOST_NAME", "PORT"})
         }
 )
+@ToString(onlyExplicitlyIncluded = true)
 public class ShardNode extends BaseEntity{
     @Id
     @GeneratedValue
     @Column(name = "NODE_ID")
+    @EqualsAndHashCode.Include
+    @ToString.Include
     private Long nodeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,4 +59,9 @@ public class ShardNode extends BaseEntity{
     @Enumerated(EnumType.STRING)
     @Column(name = "NODE_STATUS", nullable = false)
     private NodeStatus nodeStatus = NodeStatus.ONLINE;
+
+    @Version
+    @Column(name = "VERSION", nullable = false)
+    @ToString.Include
+    private Long version;
 }

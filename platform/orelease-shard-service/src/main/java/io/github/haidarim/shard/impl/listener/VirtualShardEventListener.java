@@ -21,8 +21,8 @@ public class VirtualShardEventListener {
     public void handleEvent(VirtualShardCacheEvent event){
         virtualShardCacheManager.applyForSharedRedisCache(event.getModels());
 
-        cachePublisher.publish(
-                new CacheMessage(event)
-        );
+//        cachePublisher.publish( inside method above 
+//                new CacheMessage(event)
+//        );
     }
 }

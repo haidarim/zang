@@ -43,7 +43,6 @@ public class VirtualShardServiceImpl implements VirtualShardService {
                     .virtualShardId(virtualShardId)
                     .domain(shard.getDomain().name())
                     .shardId(shard.getShardId())
-                    .version(shard.getVersion())
                     .build()
             );
         }
@@ -51,7 +50,7 @@ public class VirtualShardServiceImpl implements VirtualShardService {
         eventPublisher.publishEvent(
                 new VirtualShardCacheEvent(
                         newCacheModels,
-                        CacheProperty.CacheEventType.CREATED
+                        CacheProperty.CacheEventType.REPAIR
                 )
         );
     }

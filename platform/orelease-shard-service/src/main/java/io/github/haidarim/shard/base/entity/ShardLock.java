@@ -16,7 +16,7 @@ import java.time.Instant;
 @Table(
         name = "SHARD_LOCK"
 )
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @ToString(onlyExplicitlyIncluded = true)
 public class ShardLock extends BaseEntity{
 
@@ -24,6 +24,7 @@ public class ShardLock extends BaseEntity{
     @GeneratedValue
     @Column(name = "SHARD_ID")
     @ToString.Include
+    @EqualsAndHashCode.Include
     private Integer shardId;
 
     // shard map 1 <--------------> 0, 1
@@ -68,4 +69,9 @@ public class ShardLock extends BaseEntity{
     @Column(name = "EXPIRES_AT", nullable = false)
     @ToString.Include
     private Instant expiresAt;
+
+    @Version
+    @Column(name = "VERSION", nullable = false)
+    @ToString.Include
+    private Long version;
 }

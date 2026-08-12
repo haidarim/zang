@@ -8,17 +8,26 @@ import java.util.Set;
 
 public interface ShardRouteCacheManager {
 
-    ShardRouteModel getRoute(Integer shardId, RouteIntent routeIntent);
+    Set<ShardRouteModel> getRoutes(Integer shardId);
 
-    void put(Integer shardId, ShardRouteModel model);
+    ShardRouteModel getPrimaryRoute(Integer shardId);
 
-    void putAll(Set<ShardRouteModel> models);
-
-    void remove(Integer shardId, RouteIntent routeIntent);
+    Set<ShardRouteModel> getReplicaRoutes(Integer shardId);
 
     void clear();
 
-    Map<String, ShardRouteModel> getAll();
+    void clearCaffeineCache();
+
+    void clearRedisCache();
 
     void refresh();
+
+    void applyToSharedRedisCaches(ShardRouteModel model);
+    void applyToSharedRedisCaches(Set<ShardRouteModel> models);
+
+    void applyToCaffeineCaches(Set<ShardRouteModel> models);
+
+    void removeFromRedisCache(Integer shardId);
+
+    void removeFromCaffeine(Integer shardId);
 }

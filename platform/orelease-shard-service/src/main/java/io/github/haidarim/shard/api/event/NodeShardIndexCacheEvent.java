@@ -8,11 +8,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Getter
-public class NodeCacheEvent extends CacheEvent{
+public class NodeShardIndexCacheEvent extends CacheEvent{
 
     private final Set<ShardNodeModel> models;
 
-    public NodeCacheEvent(Set<ShardNodeModel> models, CacheProperty.CacheEventType eventType){
+    public NodeShardIndexCacheEvent(Set<ShardNodeModel> models, CacheProperty.CacheEventType eventType){
         super(CacheProperty.CacheEntity.SHARD_NODE, eventType);
         this.models = new HashSet<>(models);
     }

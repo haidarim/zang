@@ -1,12 +1,11 @@
 package io.github.haidarim.shard.impl.control.cache;
 
-import io.github.haidarim.shard.api.common.model.CacheModel;
-import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
-import io.github.haidarim.shard.api.event.NodeCacheEvent;
+import io.github.haidarim.shard.api.event.NodeShardIndexCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
+import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,8 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static io.github.haidarim.shard.impl.control.cache.CacheProperty.*;
-import static io.github.haidarim.shard.utils.CacheUtils.getRedisKeys;
-import static io.github.haidarim.shard.utils.CacheUtils.toShardIndexMap;
+import static io.github.haidarim.shard.utils.CacheUtils.*;
 import static io.github.haidarim.shard.utils.LockUtils.removeLock;
 import com.github.benmanes.caffeine.cache.Cache;
 
@@ -167,7 +165,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     public void refresh(){
         Set<ShardNodeModel> nodes = repository.findAll()
                 .stream()
-                .map(this::mapToShardNodeModel).collect(Collectors.toSet());
+                .map(CacheUtils::mapToShardNodeModel).collect(Collectors.toSet());
 
         applyToSharedRedisCaches(nodes);
     }
@@ -189,7 +187,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         );
 
         eventPublisher.publishEvent(
-                new NodeCacheEvent(Set.of(model), CacheEventType.CREATED)
+                new NodeShardIndexCacheEvent(Set.of(model), CacheEventType.REPAIR)
         );
     }
 
@@ -224,8 +222,6 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
             shardIndexValues.forEach((shardId, nodeIds) -> {
                 byte[] rawKey = keySerializer.serialize(shardNodeByShardId(shardId));
 
-                connection.keyCommands().del(rawKey);
-
                 byte[][] rawMembers = nodeIds.stream()
                         .map(id -> id.getBytes(java.nio.charset.StandardCharsets.UTF_8))
                         .toArray(byte[][]::new);
@@ -236,9 +232,9 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         });
 
         eventPublisher.publishEvent(
-                new NodeCacheEvent(
+                new NodeShardIndexCacheEvent(
                         models,
-                        CacheEventType.CREATED
+                        CacheEventType.REPAIR
                 )
         );
     }
@@ -329,7 +325,11 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     }
 
     private ShardNodeModel fetchFromDbAndUpdateCache(Long nodeId){
-        ShardNode node = repository.findById(nodeId).orElseThrow(()-> new RuntimeException("No such entity found"));
+        ShardNode node = repository.findById(nodeId).orElse(null);
+
+        if(node == null){
+            return null;
+        }
 
         ShardNodeModel model = mapToShardNodeModel(node);
 
@@ -341,29 +341,14 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         Set<ShardNodeModel> models = repository
                 .findByNodeShardMap_ShardId(shardId)
                 .stream()
-                .map(this::mapToShardNodeModel)
+                .map(CacheUtils::mapToShardNodeModel)
                 .collect(Collectors.toSet());
 
         if(models.isEmpty()){
-            throw new RuntimeException("No Node exists for shard: " + shardId);
+            return Set.of();
         }
 
         applyToSharedRedisCaches(models);
         return  models;
     }
-
-    private ShardNodeModel mapToShardNodeModel(ShardNode node){
-        return ShardNodeModel.builder()
-                .nodeId(node.getNodeId())
-                .shardId(node.getNodeShardMap().getShardId())
-                .hostName(node.getHostName())
-                .port(node.getPort())
-                .region(node.getRegion())
-                .domain(node.getNodeShardMap().getDomain())
-                .role(node.getNodeRole())
-                .status(node.getNodeStatus())
-                .connectionSecret(node.getConnectionSecret())
-                .build();
-    }
-
 }

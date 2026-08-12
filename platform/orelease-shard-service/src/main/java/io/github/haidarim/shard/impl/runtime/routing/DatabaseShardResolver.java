@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static io.github.haidarim.shard.api.common.type.RouteIntent.WRITE;
+
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,14 @@ public class DatabaseShardResolver implements ShardResolver {
         int virtualShard = calculator.calculate(entityId);
         VirtualShardModel virtualShardModel = virtualShardCacheManager.getVirtualShard(virtualShard, domain);
 
-        return routeCacheManager.getRoute(virtualShardModel.shardId(), routeIntent);
+        if (WRITE.equals(routeIntent)) {
+            return routeCacheManager.getPrimaryRoute(virtualShardModel.getShardId());
+        }
+
+        // TODO make later better decision on e.g. region, distance, ...
+        return routeCacheManager.getReplicaRoutes(virtualShardModel.getShardId())
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No route found"));
     }
 }

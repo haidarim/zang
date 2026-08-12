@@ -52,7 +52,7 @@ public class ShardNodeServiceImpl implements ShardNodeService {
         cachePublisher.publish(
                 new CacheMessage(
                         CacheProperty.CacheEntity.SHARD_NODE,
-                        CacheProperty.CacheEventType.CREATED,
+                        CacheProperty.CacheEventType.REPAIR,
                         nodeModel.nodeId()
                 )
         );
@@ -136,6 +136,8 @@ public class ShardNodeServiceImpl implements ShardNodeService {
                 .role(node.getNodeRole())
                 .status(node.getNodeStatus())
                 .connectionSecret(node.getConnectionSecret())
+                .nodeVersion(node.getVersion())
+                .shardVersion(node.getNodeShardMap().getVersion())
                 .build();
     }
 

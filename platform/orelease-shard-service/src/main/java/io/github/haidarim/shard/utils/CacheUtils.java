@@ -2,6 +2,9 @@ package io.github.haidarim.shard.utils;
 
 import io.github.haidarim.shard.api.common.model.CacheModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
+import io.github.haidarim.shard.api.common.model.ShardRouteModel;
+import io.github.haidarim.shard.api.common.type.RouteIntent;
+import io.github.haidarim.shard.base.entity.ShardNode;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.Cursor;
@@ -46,5 +49,47 @@ public final class CacheUtils {
                                 Collectors.toSet()
                         )
                 ));
+    }
+
+    public static ShardNodeModel mapToShardNodeModel(ShardNode node){
+        return ShardNodeModel.builder()
+                .nodeId(node.getNodeId())
+                .shardId(node.getNodeShardMap().getShardId())
+                .shardName(node.getNodeShardMap().getShardName())
+                .databaseName(node.getNodeShardMap().getDatabaseName())
+                .hostName(node.getHostName())
+                .port(node.getPort())
+                .region(node.getRegion())
+                .domain(node.getNodeShardMap().getDomain())
+                .role(node.getNodeRole())
+                .status(node.getNodeStatus())
+                .connectionSecret(node.getConnectionSecret())
+                .nodeVersion(node.getVersion())
+                .shardVersion(node.getNodeShardMap().getVersion())
+                .build();
+    }
+
+    public static ShardRouteModel mapToRouteModel(ShardNodeModel nodeModel){
+        return ShardRouteModel.builder()
+                .shardId(nodeModel.getShardId())
+                .shardName(nodeModel.getShardName())
+                .databaseName(nodeModel.getDatabaseName())
+                .hostName(nodeModel.getHostName())
+                .port(nodeModel.getPort())
+                .shardVersion(nodeModel.getShardVersion())
+                .nodeVersion(nodeModel.getNodeVersion())
+                .build();
+    }
+
+    public static ShardRouteModel mapToRouteModel(ShardNode node){
+        return ShardRouteModel.builder()
+                .shardId(node.getNodeShardMap().getShardId())
+                .shardName(node.getNodeShardMap().getShardName())
+                .databaseName(node.getNodeShardMap().getDatabaseName())
+                .hostName(node.getHostName())
+                .port(node.getPort())
+                .shardVersion(node.getNodeShardMap().getVersion())
+                .nodeVersion(node.getVersion())
+                .build();
     }
 }

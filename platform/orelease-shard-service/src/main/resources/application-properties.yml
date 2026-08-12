@@ -10,6 +10,9 @@ spring:
 caffeine:
   node-cache:
     max-size: 5_000
-
   node-cache-by-id:
+    max-size: 5_000
+  primary-route-cache:
+    max-size: 5_000
+  replica-route-cache:
     max-size: 5_000
