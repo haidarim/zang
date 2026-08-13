@@ -1,9 +1,7 @@
 package io.github.haidarim.shard.api.runtime.service;
 
 import io.github.haidarim.shard.api.common.model.ShardRouteModel;
-import io.github.haidarim.shard.api.common.type.RouteIntent;
 
-import java.util.Map;
 import java.util.Set;
 
 public interface ShardRouteCacheManager {
@@ -22,10 +20,12 @@ public interface ShardRouteCacheManager {
 
     void refresh();
 
-    void applyToSharedRedisCaches(ShardRouteModel model);
-    void applyToSharedRedisCaches(Set<ShardRouteModel> models);
+    void applyPrimaryRouteToRedisCache(Integer shardId, Long nodeId);
+    void applyReplicaRoutesToRedisCache(Integer shardId, Set<Long> nodeIds);
 
-    void applyToCaffeineCaches(Set<ShardRouteModel> models);
+    void applyToPrimaryToCaffeineCaches(Integer shardId, Long nodeId);
+
+    void applyToReplicaToCaffeineCaches(Integer shardId, Set<Long> nodeIds);
 
     void removeFromRedisCache(Integer shardId);
 

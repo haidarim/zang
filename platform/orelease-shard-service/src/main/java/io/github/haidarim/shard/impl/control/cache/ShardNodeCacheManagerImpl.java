@@ -270,6 +270,11 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         }
     }
 
+    public Map<Long, ShardNodeModel> getAll(){
+        return Map.copyOf(nodeCache.asMap());
+    }
+
+
     private void putNodeInLocalCaches(ShardNodeModel model){
         nodeCache.put(model.getNodeId(), model);
 

@@ -3,6 +3,7 @@ package io.github.haidarim.shard.api.runtime.service;
 import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface ShardNodeCacheManager {
@@ -27,5 +28,7 @@ public interface ShardNodeCacheManager {
     void applyToCaffeineCaches(Set<ShardNodeModel> nodeModels);
 
     void removeFromRedisCache(Long nodeId);
+
+    Map<Long, ShardNodeModel> getAll();
 }
 
