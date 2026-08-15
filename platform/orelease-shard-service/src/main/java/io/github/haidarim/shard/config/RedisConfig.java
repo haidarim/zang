@@ -1,7 +1,6 @@
 package io.github.haidarim.shard.config;
 
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
-import io.github.haidarim.shard.api.common.model.ShardRouteModel;
 import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.impl.control.cache.RedisCacheSubscriber;
 import org.jspecify.annotations.NonNull;
@@ -11,17 +10,13 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 import static io.github.haidarim.shard.impl.control.cache.CacheProperty.*;
 
@@ -32,18 +27,6 @@ public class RedisConfig {
     @Bean
     public StringRedisSerializer redisStringSerializer(){
         return new StringRedisSerializer();
-    }
-
-    @Bean
-    public RedisTemplate<String, VirtualShardModel> virtualShardRedisTemplate(
-            RedisConnectionFactory redisConnectionFactory,
-            StringRedisSerializer redisStringSerializer
-    ){
-        return createTemplate(
-                redisConnectionFactory,
-                redisStringSerializer,
-                new JacksonJsonRedisSerializer<>(VirtualShardModel.class)
-        );
     }
 
     @Bean
@@ -59,19 +42,19 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, ShardRouteModel> shardRouteRedisTemplate(
+    public RedisTemplate<String, Long> primaryRoutesRedisTemplate(
             RedisConnectionFactory redisConnectionFactory,
             StringRedisSerializer redisStringSerializer
     ){
         return createTemplate(
                 redisConnectionFactory,
                 redisStringSerializer,
-                new JacksonJsonRedisSerializer<>(ShardRouteModel.class)
+                new JacksonJsonRedisSerializer<>(Long.class)
         );
     }
 
     @Bean
-    public RedisTemplate<String, String> shardIndexRedisTemplate(
+    public RedisTemplate<String, String> redisStringTemplate(
             RedisConnectionFactory redisConnectionFactory,
             StringRedisSerializer redisStringSerializer
     ){
@@ -79,6 +62,31 @@ public class RedisConfig {
                 redisConnectionFactory,
                 redisStringSerializer,
                 redisStringSerializer
+        );
+    }
+
+    @Bean
+    public RedisTemplate<String, VirtualShardModel> virtualShardRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                new JacksonJsonRedisSerializer<>(VirtualShardModel.class)
+        );
+    }
+
+    @Bean
+    public RedisTemplate<String, Set<VirtualShardModel>> virtualSharIndexdRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer,
+            JacksonJsonRedisSerializer<@NonNull Set<VirtualShardModel>> valueSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                valueSerializer
         );
     }
 

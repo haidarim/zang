@@ -1,9 +1,13 @@
 package io.github.haidarim.shard.impl.control.grpc;
 
+import io.github.haidarim.shard.api.control.service.ShardService;
+import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.generated.grpc.*;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
+
+import java.util.List;
 
 /**
  * ShardGrpcApiService, handles requests for shard operations as part of control plane
@@ -12,10 +16,16 @@ import net.devh.boot.grpc.server.service.GrpcService;
 @RequiredArgsConstructor
 public class ShardGrpcApiService extends ShardMapApiServiceGrpc.ShardMapApiServiceImplBase {
 
+    private final ShardService shardService;
 
     @Override
     public void getAllShards(GetAllShardsRequest request, StreamObserver<GetAllShardsResponse> responseStreamObserver){
+        try {
+            shardService.getAllShards();
 
+        }catch (Exception e){
+
+        }
     }
 
     @Override

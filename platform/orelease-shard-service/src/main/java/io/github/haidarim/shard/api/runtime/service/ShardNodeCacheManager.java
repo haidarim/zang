@@ -1,6 +1,6 @@
 package io.github.haidarim.shard.api.runtime.service;
 
-import io.github.haidarim.shard.api.common.model.ShardMapModel;
+
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 
 import java.util.Map;
@@ -17,8 +17,6 @@ public interface ShardNodeCacheManager {
     void clear();
 
     void clearCaffeineCache();
-
-    void clearRedisCache();
 
     void refresh();
 

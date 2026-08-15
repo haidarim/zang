@@ -16,8 +16,6 @@ public interface ShardRouteCacheManager {
 
     void clearCaffeineCache();
 
-    void clearRedisCache();
-
     void refresh();
 
     void applyPrimaryRouteToRedisCache(Integer shardId, Long nodeId);

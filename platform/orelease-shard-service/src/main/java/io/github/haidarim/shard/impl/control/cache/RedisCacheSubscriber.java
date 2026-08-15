@@ -59,7 +59,7 @@ public class RedisCacheSubscriber implements MessageListener {
 
     private void handleVirtualShardCreatedMessage(CacheEvent event){
         if (event instanceof VirtualShardCacheEvent){
-            virtualShardCacheManager.applyForLocalCache(
+            virtualShardCacheManager.applyToVirtualShardCache(
                     ((VirtualShardCacheEvent) event).getModels()
             );
             return;

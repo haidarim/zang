@@ -2,8 +2,10 @@ package io.github.haidarim.shard.impl.listener;
 
 import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
+import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
+import io.github.haidarim.shard.api.runtime.service.VirtualShardCacheManager;
 import io.github.haidarim.shard.impl.control.cache.RedisCachePublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,6 +14,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Set;
 
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.DELETED;
 import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.UPDATED;
 
 @Component
@@ -19,6 +22,7 @@ import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEve
 public class ShardMapEventListener {
     private final RedisCachePublisher cachePublisher;
     private final ShardNodeCacheManager nodeCacheManager;
+    private final VirtualShardCacheManager virtualShardCacheManager;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEvent(ShardMapCacheEvent event){
@@ -26,19 +30,21 @@ public class ShardMapEventListener {
         if (model == null){
             return;
         }
-
+        
         if(UPDATED.equals(event.getEventType())) {
             // Nodes
-            updateLocalRedisNodesAndUpdateOthers(model);
-            // Routes
-            updateLocalRedisRoutesAndUpdateOthers(model);
+            updateNodeCacheAndUpdateOthers(model);
+
             // VirtualShards
-            updateLocalRedisVirtualShardsAndUpdateOthers(model);
+            updateVirtualRedisCacheAndUpdateOthers(model);
+        } else if (DELETED.equals(event.getEventType())) {
+            removeFromNodeCacheAndUpdateOthers(model);
+            removeFromVirtualCacheAndUpdateOthers(model);
         }
+
     }
 
-    private void updateLocalRedisNodesAndUpdateOthers(ShardMapModel model){
-
+    private void updateNodeCacheAndUpdateOthers(ShardMapModel model){
         Set<ShardNodeModel> nodeModels =  nodeCacheManager.getNodes(model.getShardId());
         if (nodeModels.isEmpty()){
             return;
@@ -46,17 +52,40 @@ public class ShardMapEventListener {
 
         nodeModels.forEach(m -> {
             m.setShardVersion(model.getVersion());
-            m.setDatabaseName(model.getDatabaseName() != null ? model.getDatabaseName() : m.getDatabaseName());
-            m.setDomain(model.getDomain() != null ? model.getDomain() : m.getDomain());
+            m.setDatabaseName(model.getDatabaseName());
+            m.setDomain(model.getDomain());
         });
         nodeCacheManager.applyToSharedRedisCaches(nodeModels);
+
+        // TODO invalidate all L1s
     }
 
-    private void updateLocalRedisRoutesAndUpdateOthers(ShardMapModel model){
-
+    private void updateVirtualRedisCacheAndUpdateOthers(ShardMapModel model){
+        Set<VirtualShardModel> virtualShardModels = virtualShardCacheManager.getVirtualShardIds(model.getShardId());
+        virtualShardModels.forEach(m -> {
+            virtualShardCacheManager.applyToVirtualShardRedisCache(
+                    VirtualShardModel.builder()
+                            .shardId(model.getShardId())
+                            .virtualShardId(m.getVirtualShardId())
+                            .domain(model.getDomain().name())
+                            .virtualVersion(m.getVirtualVersion())
+                            .shardVersion(model.getVersion())
+                            .build()
+            );
+        });
     }
 
-    private void updateLocalRedisVirtualShardsAndUpdateOthers(ShardMapModel model){
+    private void removeFromNodeCacheAndUpdateOthers(ShardMapModel model){
+        Set<ShardNodeModel> nodeModels =  nodeCacheManager.getNodes(model.getShardId());
+        if (nodeModels.isEmpty()){
+            return;
+        }
 
+        nodeModels.forEach(m -> nodeCacheManager.removeFromRedisCache(m.getNodeId()));
+    }
+
+    private void removeFromVirtualCacheAndUpdateOthers(ShardMapModel model){
+        Set<VirtualShardModel> virtualShardModels = virtualShardCacheManager.getVirtualShardIds(model.getShardId());
+        virtualShardModels.forEach(m -> virtualShardCacheManager.removeFromRedisCaches(model.getShardId(), m.getIdentifier()));
     }
 }

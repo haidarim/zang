@@ -3,6 +3,8 @@ package io.github.haidarim.shard.config;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.model.ShardRouteModel;
+import io.github.haidarim.shard.api.common.model.VirtualShardModel;
+import io.github.haidarim.shard.base.entity.VirtualShardMapId;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +35,7 @@ public class CacheConfig {
     }
 
     @Bean
-    public Cache<@NonNull Integer, ShardRouteModel> primaryRouteCache(
+    public Cache<@NonNull Integer, Long> primaryRouteCache(
             @Value("${caffeine.primary-route-cache.max-size}") long  maxsize
     ){
         return Caffeine.newBuilder()
@@ -42,8 +44,26 @@ public class CacheConfig {
     }
 
     @Bean
-    public Cache<@NonNull Integer, Set<ShardRouteModel>> replicaRouteCache(
+    public Cache<@NonNull Integer, Set<Long>> replicaRouteCache(
             @Value("${caffeine.replica-route-cache.max-size}") long  maxsize
+    ){
+        return Caffeine.newBuilder()
+                .maximumSize(maxsize)
+                .build();
+    }
+
+    @Bean
+    public Cache<@lombok.NonNull VirtualShardMapId, VirtualShardModel> virtualShardCache(
+            @Value("${caffeine.virtual-shard-cache.max-size}") long  maxsize
+    ){
+        return Caffeine.newBuilder()
+                .maximumSize(maxsize)
+                .build();
+    }
+
+    @Bean
+    public Cache<@lombok.NonNull Integer, Set<VirtualShardModel>> shardIndexCache(
+            @Value("${caffeine.shard-index-cache.max-size}") long  maxsize
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)

@@ -10,18 +10,28 @@ import java.util.Set;
 public interface VirtualShardCacheManager {
 
     VirtualShardModel getVirtualShard(Integer virtualId, ShardDomain domain);
+    Set<VirtualShardModel> getVirtualShardIds(Integer shardId);
 
-    void put(Integer virtualId, ShardDomain domain, VirtualShardModel model);
+    void removeFromCaffeineCaches(Integer shardId, VirtualShardMapId id);
 
-    void remove(VirtualShardMapId virtualId);
+    void removeFromRedisCaches(Integer shardId, VirtualShardMapId id);
 
     void clear();
 
-    Map<VirtualShardMapId, VirtualShardModel> getAll();
+    void clearCaffeineCache();
 
     void refresh();
 
-    void applyForLocalCache(Set<VirtualShardModel> models);
+    void applyToRedisCaches(Set<VirtualShardModel> models);
 
-    void applyForSharedRedisCache(Set<VirtualShardModel> models);
+    void applyToVirtualShardCache(VirtualShardModel model);
+    void applyToShardIndexCache(VirtualShardModel model);
+
+    void applyToVirtualShardRedisCache(Set<VirtualShardModel> models);
+
+    void applyToVirtualShardRedisCache(VirtualShardModel model);
+
+    void applyToShardIndexRedisCache(Set<VirtualShardModel> models);
+
+    Map<VirtualShardMapId, VirtualShardModel> getAll();
 }

@@ -87,14 +87,16 @@ public class ShardServiceImpl implements ShardService {
         }
 
         if (modelBuilder != null){
-            shardMapRepository.saveAndFlush(shard);
-
+            shard = shardMapRepository.saveAndFlush(shard);
             eventPublisher.publishEvent(
                     new ShardMapCacheEvent(
                             modelBuilder
                                     .shardId(shard.getShardId())
                                     .shardName(shard.getShardName())
                                     .version(shard.getVersion())
+                                    .domain(shard.getDomain())
+                                    .databaseName(shard.getDatabaseName())
+                                    .status(shard.getStatus())
                                     .build(),
                             CacheProperty.CacheEventType.UPDATED
                     )
@@ -110,6 +112,14 @@ public class ShardServiceImpl implements ShardService {
         ShardMap shard = shardMapRepository.findByShardName(shardName).orElseThrow(() -> new ShardNotFoundException(shardName));
         validateForShardDeletion(shard.getShardId());
         shardMapRepository.delete(shard);
+        eventPublisher.publishEvent(
+                new ShardMapCacheEvent(
+                        ShardMapModel.builder()
+                                .shardId(shard.getShardId())
+                                .build(),
+                        CacheProperty.CacheEventType.DELETED
+                )
+        );
         return shard.getShardId();
     }
 

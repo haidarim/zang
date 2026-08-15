@@ -1,6 +1,5 @@
 package io.github.haidarim.shard.impl.control.cache;
 
-import io.github.haidarim.shard.api.common.type.RouteIntent;
 
 public final class CacheProperty {
 
@@ -8,11 +7,13 @@ public final class CacheProperty {
 
     public static final String REDIS_KEY_ROUTE_PREFIX = "shard:route:%d";
     public static final String REDIS_KEY_VIRTUAL_SHARD_PREFIX = "shard:virtual:%s:%d";
+    public static final String REDIS_KEY_VIRTUAL_ID_BY_SHARD_ID = "shard:virtualIds:%d";
     public static final String REDIS_KEY_SHARD_NODE_PREFIX = "shard:node:%d";
     public static final String REDIS_KEY_SHARD_NODE_BY_SHARD_ID = "shard:nodes:%d";
 
     public static final String ALL_ROUTE_KEYS = "shard:route:*";
     public static final String ALL_VIRTUAL_SHARD_KEYS = "shard:virtual:*";
+    public static final String ALL_VIRTUAL_SHARD_INDEX_KEYS = "shard:virtualIds:*";
     public static final String ALL_SHARD_NODE_KEYS = "shard:node:*";
     public static final String ALL_SHARD_NODE_INDEX_KEYS = "shard:nodes:*";
 
@@ -27,6 +28,10 @@ public final class CacheProperty {
 
     static String virtualShard(String domain, Integer virtualShardId){
         return String.format(REDIS_KEY_VIRTUAL_SHARD_PREFIX, domain, virtualShardId);
+    }
+
+    static String virtualShardIdByShardId(Integer shardId){
+        return String.format(REDIS_KEY_VIRTUAL_ID_BY_SHARD_ID, shardId);
     }
 
     static String shardNode(Long nodeId){
@@ -44,6 +49,7 @@ public final class CacheProperty {
     }
 
     public static enum CacheEventType {
+        CREATED,
         REPAIR,
         UPDATED,
         DELETED,

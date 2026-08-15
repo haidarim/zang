@@ -5,14 +5,12 @@ import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.model.ShardRouteModel;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
-import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.oxm.xstream.XStreamMarshaller;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -127,7 +125,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
         replicaRouteCache.invalidateAll();
     }
 
-    public void clearRedisCache(){
+    private void clearRedisCache(){
         Set<String> primaryKeys = getRedisKeys(primaryRedisCache, ALL_ROUTE_KEYS);
         if(!primaryKeys.isEmpty()){
             primaryRedisCache.delete(primaryKeys);
@@ -173,8 +171,6 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
                 shardRoute(shardId),
                 nodeId
         );
-
-        // TODO event publisher
     }
 
     @SuppressWarnings("unchecked")
@@ -202,8 +198,6 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
             });
             return null;
         });
-
-        // TODO event
     }
 
     @Override
@@ -276,6 +270,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
                 .orElse(null);
 
         if(nodeId != null) {
+            applyToPrimaryToCaffeineCaches(shardId, nodeId);
             applyPrimaryRouteToRedisCache(shardId, nodeId);
         }
 
@@ -295,6 +290,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
                 .collect(Collectors.toSet());
 
         if(!nodeIds.isEmpty()){
+            applyToReplicaToCaffeineCaches(shardId, nodeIds);
             applyReplicaRoutesToRedisCache(shardId, nodeIds);
         }
         return nodeIds;

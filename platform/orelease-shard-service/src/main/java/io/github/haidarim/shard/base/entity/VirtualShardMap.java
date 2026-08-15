@@ -32,4 +32,9 @@ public class VirtualShardMap extends BaseEntity{
     @Column(name = "VERSION", nullable = false)
     @ToString.Include
     private Long version;
+
+    public VirtualShardMap (VirtualShardMapId id, ShardMap physicalShardMap){
+        this.id = id;
+        this.physicalShardMap = physicalShardMap;
+    }
 }

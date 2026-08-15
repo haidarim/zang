@@ -16,3 +16,7 @@ caffeine:
     max-size: 5_000
   replica-route-cache:
     max-size: 5_000
+  virtual-shard-cache:
+    max-size: 5_000
+  shard-index-cache:
+    max-size: 5_000

@@ -36,13 +36,15 @@ public class VirtualShardServiceImpl implements VirtualShardService {
                     );
 
             VirtualShardMap mapping = new VirtualShardMap(id, shard);
-            virtualShardMapRepository.save(mapping);
+            VirtualShardMap virtualShardMap = virtualShardMapRepository.save(mapping);
 
             newCacheModels.add(
                     VirtualShardModel.builder()
                     .virtualShardId(virtualShardId)
                     .domain(shard.getDomain().name())
                     .shardId(shard.getShardId())
+                    .shardVersion(shard.getVersion())
+                    .virtualVersion(virtualShardMap.getVersion())
                     .build()
             );
         }
@@ -50,7 +52,7 @@ public class VirtualShardServiceImpl implements VirtualShardService {
         eventPublisher.publishEvent(
                 new VirtualShardCacheEvent(
                         newCacheModels,
-                        CacheProperty.CacheEventType.REPAIR
+                        CacheProperty.CacheEventType.CREATED
                 )
         );
     }

@@ -1,14 +1,12 @@
 package io.github.haidarim.shard.impl.control.cache;
 
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
-import io.github.haidarim.shard.api.event.NodeShardIndexCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
 import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -44,85 +42,43 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     private final Map<Integer, ReentrantLock> shardLocks = new ConcurrentHashMap<>();
 
 
-    private final ApplicationEventPublisher eventPublisher;
-
 
     @Override
     public ShardNodeModel getNode(Long nodeId) {
-        ShardNodeModel model = nodeCache.getIfPresent(nodeId);
-        if(model != null){
-            return model;
-        }
-
         ReentrantLock lock = nodeLocks.computeIfAbsent(nodeId, key -> new ReentrantLock());
         lock.lock();
-        try {
-            model = nodeCache.getIfPresent(nodeId);
-            if(model != null){
-                return model;
-            }
 
-            // L2
-            model = nodeRedisCache.opsForValue().get(shardNode(nodeId));
-            if (model != null) {
-                putNodeInLocalCaches(model);
-                return model;
+        ShardNodeModel model = nodeCache.getIfPresent(nodeId);
+
+        if(model == null) {
+            try {
+                model = resolveNode(nodeId);
+            } finally {
+                lock.unlock();
+                removeLock(nodeLocks, nodeId, lock);
             }
-            // L3
-            return fetchFromDbAndUpdateCache(nodeId);
-        }finally {
-            lock.unlock();
-            removeLock(nodeLocks, nodeId, lock);
         }
+
+        return model;
     }
 
     public Set<ShardNodeModel> getNodes(Integer shardId){
-        // check L1
-        Set<Long> nodeIds = shardIndexCache.getIfPresent(shardId);
-        if (nodeIds != null){
-            Set<ShardNodeModel> models = resolveLocalNodes(nodeIds);
-
-            if (models.size() == nodeIds.size()) {
-                return models;
-            }
-        }
-
         ReentrantLock lock = shardLocks.computeIfAbsent(shardId, key -> new ReentrantLock());
         lock.lock();
-        try{
-            // try L1
-            nodeIds = shardIndexCache.getIfPresent(shardId);
-            if (nodeIds != null){
-                Set<ShardNodeModel> models = resolveLocalNodes(nodeIds);
 
-                if (models.size() == nodeIds.size()) {
-                    return models;
-                }
+        // check L1
+        Set<ShardNodeModel> models = resolveLocalNodes(shardIndexCache.getIfPresent(shardId));
+
+        if(models.isEmpty()) {
+            try {
+                models = resolveNodes(shardId);
+            } finally {
+                lock.unlock();
+                removeLock(shardLocks, shardId, lock);
             }
-            //L2
-            Set<String> redisNodeIds = shardIndexRedisCache.opsForSet()
-                    .members(shardNodeByShardId(shardId));
-            if (redisNodeIds != null && !redisNodeIds.isEmpty()) {
-
-                nodeIds = redisNodeIds.stream()
-                        .map(Long::valueOf)
-                        .collect(Collectors.toUnmodifiableSet());
-
-                shardIndexCache.put(shardId, nodeIds);
-
-                // L2 - resolve actual node models
-                Set<ShardNodeModel> models = getModelsFromRedisCache(nodeIds);
-                if (!models.isEmpty()){
-                    return models;
-                }
-            }
-
-            // L3
-            return fetchNodesFromDbAndUpdateCache(shardId);
-        } finally {
-            lock.unlock();
-            removeLock(shardLocks, shardId, lock);
         }
+
+        return models;
     }
 
 
@@ -148,8 +104,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         shardIndexCache.invalidateAll();
     }
 
-    @Override
-    public void clearRedisCache(){
+    private void clearRedisCache(){
         Set<String> nodeKeys = getRedisKeys(nodeRedisCache, ALL_SHARD_NODE_KEYS);
         if(!nodeKeys.isEmpty()){
             nodeRedisCache.delete(nodeKeys);
@@ -166,7 +121,8 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         Set<ShardNodeModel> nodes = repository.findAll()
                 .stream()
                 .map(CacheUtils::mapToShardNodeModel).collect(Collectors.toSet());
-
+        clear();
+        applyToCaffeineCaches(nodes);
         applyToSharedRedisCaches(nodes);
     }
 
@@ -184,10 +140,6 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         shardIndexRedisCache.opsForSet().add(
                 shardNodeByShardId(model.getShardId()),
                 model.getNodeId().toString()
-        );
-
-        eventPublisher.publishEvent(
-                new NodeShardIndexCacheEvent(Set.of(model), CacheEventType.REPAIR)
         );
     }
 
@@ -230,13 +182,6 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
             });
             return null;
         });
-
-        eventPublisher.publishEvent(
-                new NodeShardIndexCacheEvent(
-                        models,
-                        CacheEventType.REPAIR
-                )
-        );
     }
 
     @Override
@@ -246,34 +191,62 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         }
 
         nodeModels.forEach(this::putNodeInLocalCaches);
-
-        Map<Integer, Set<Long>> shardIndexValues = toShardIndexMap(nodeModels);
-        shardIndexValues.forEach((shardId, nodeIds) -> shardIndexCache.put(shardId, Set.copyOf(nodeIds)));
     }
 
     @Override
     public void removeFromRedisCache(Long nodeId) {
         ShardNodeModel model = nodeRedisCache.opsForValue().get(shardNode(nodeId));
-        if (model == null){
-            model = nodeCache.getIfPresent(nodeId);
+        if(model == null){
+            return;
         }
 
         nodeRedisCache.delete(shardNode(nodeId));
-
-        if (model != null) {
-            shardIndexRedisCache
-                    .opsForSet()
-                    .remove(
-                            shardNodeByShardId(model.getShardId()),
-                            nodeId.toString()
-                    );
-        }
+        shardIndexRedisCache
+                .opsForSet()
+                .remove(
+                        shardNodeByShardId(model.getShardId()),
+                        nodeId.toString()
+                );
     }
 
+    @Override
     public Map<Long, ShardNodeModel> getAll(){
         return Map.copyOf(nodeCache.asMap());
     }
 
+    private ShardNodeModel resolveNode(Long nodeId){
+        // L2
+        ShardNodeModel model = nodeRedisCache.opsForValue().get(shardNode(nodeId));
+        if (model != null) {
+            putNodeInLocalCaches(model);
+            return model;
+        }
+        // L3
+        return fetchFromDbAndUpdateCache(nodeId);
+    }
+
+    private Set<ShardNodeModel> resolveNodes(Integer shardId){
+        //L2
+        Set<String> redisNodeIds = shardIndexRedisCache.opsForSet()
+                .members(shardNodeByShardId(shardId));
+        if (redisNodeIds != null && !redisNodeIds.isEmpty()) {
+
+            Set<Long> nodeIds = redisNodeIds.stream()
+                    .map(Long::valueOf)
+                    .collect(Collectors.toUnmodifiableSet());
+
+            shardIndexCache.put(shardId, nodeIds);
+
+            // L2 - resolve actual node models
+            Set<ShardNodeModel> models = getModelsFromRedisCache(nodeIds);
+            if (!models.isEmpty()) {
+                return models;
+            }
+        }
+
+        // L3
+        return fetchNodesFromDbAndUpdateCache(shardId);
+    }
 
     private void putNodeInLocalCaches(ShardNodeModel model){
         nodeCache.put(model.getNodeId(), model);
@@ -289,10 +262,19 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     }
 
     private Set<ShardNodeModel> resolveLocalNodes(Set<Long> nodeIds) {
-        return nodeIds.stream()
+        if (nodeIds == null || nodeIds.isEmpty()){
+            return Set.of();
+        }
+
+        Set<ShardNodeModel> models = nodeIds.stream()
                 .map(nodeCache::getIfPresent)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        if (models.size() == nodeIds.size()) {
+            return models;
+        }
+
+        return Set.of();
     }
 
     private Set<ShardNodeModel> getModelsFromRedisCache(Set<Long> nodeIds){
@@ -337,7 +319,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         }
 
         ShardNodeModel model = mapToShardNodeModel(node);
-
+        applyToCaffeineCaches(Set.of(model));
         applyToSharedRedisCaches(model);
         return model;
     }
@@ -353,6 +335,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
             return Set.of();
         }
 
+        applyToCaffeineCaches(models);
         applyToSharedRedisCaches(models);
         return  models;
     }
