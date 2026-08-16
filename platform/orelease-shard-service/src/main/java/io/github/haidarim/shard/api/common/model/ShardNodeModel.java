@@ -37,4 +37,9 @@ public class ShardNodeModel extends CacheModel<Long> implements Serializable {
     public Long getIdentifier() {
         return nodeId;
     }
+
+    @Override
+    public Integer getShardId(){
+        return shardId;
+    }
 }

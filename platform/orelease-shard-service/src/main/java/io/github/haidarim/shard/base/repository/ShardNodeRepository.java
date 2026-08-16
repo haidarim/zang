@@ -15,7 +15,6 @@ import java.util.Optional;
 @Repository
 public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @NonNull Long> {
 
-    List<ShardNode> fetchNodesByStatus(String nodeStatus);
 
     @Query("""
            SELECT node FROM ShardNode node

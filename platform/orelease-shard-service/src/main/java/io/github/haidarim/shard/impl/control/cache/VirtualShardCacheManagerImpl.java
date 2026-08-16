@@ -206,7 +206,7 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
 
         Set<String> shardIndexKeys = getRedisKeys(shardIndexRedisCache, ALL_VIRTUAL_SHARD_INDEX_KEYS);
         if (!shardIndexKeys.isEmpty()){
-            virtualShardRedisCache.delete(shardIndexKeys);
+            shardIndexRedisCache.delete(shardIndexKeys);
         }
     }
 
@@ -226,9 +226,7 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
         if(models != null && !models.isEmpty()){
             models.forEach(m -> {
                 applyToVirtualShardCache(m);
-                if (virtualShardCache.getIfPresent(m.getIdentifier()) == null){
-                    applyToShardIndexCache(m);
-                }
+                applyToShardIndexCache(m);
             });
 
             return models;

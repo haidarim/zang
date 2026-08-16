@@ -1,6 +1,10 @@
 package io.github.haidarim.shard.impl.control.cache;
 
+import io.github.haidarim.shard.api.common.model.ShardMapModel;
+import io.github.haidarim.shard.api.common.model.ShardNodeModel;
+import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.api.event.CacheEvent;
+import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.api.event.VirtualShardCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
@@ -14,7 +18,11 @@ import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.REPAIR;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.*;
 
 @Component
 @RequiredArgsConstructor
@@ -23,21 +31,22 @@ public class RedisCacheSubscriber implements MessageListener {
     private final ObjectMapper mapper;
     private final ShardNodeCacheManager nodeCacheManager;
     private final VirtualShardCacheManager virtualShardCacheManager;
-    private final ShardRouteCacheManager routeCacheManager;
 
     @Override
     public void onMessage(@NonNull Message message, byte @Nullable [] pattern) {
 
         CacheEvent event = mapper.readValue(message.getBody(), CacheMessage.class).getEvent();
-
+        if(event == null){
+            throw new RuntimeException("Event cannot be null, error");
+        }
 
         switch (event.getEntity()) {
             case VIRTUAL_SHARD -> {
-                handleVirtualShardCacheMessage(event);
+
                 break;
             }
             case SHARD_MAP -> {
-
+                invalidateLocalCaches(event);
                 break;
             }
             case SHARD_NODE -> {
@@ -50,20 +59,23 @@ public class RedisCacheSubscriber implements MessageListener {
         }
     }
 
-    private void handleVirtualShardCacheMessage(CacheEvent event){
-        if (REPAIR.equals(event.getEventType())){
-            handleVirtualShardCreatedMessage(event);
-        }
+    private void invalidateLocalCaches(CacheEvent event){
+        boolean shouldInvalidateShard = (event instanceof ShardMapCacheEvent) &&
+                (UPDATED.equals(event.getEventType()) || DELETED.equals(event.getEventType()));
+        if(shouldInvalidateShard){
+            ShardMapModel model = ((ShardMapCacheEvent) event).getModel();
 
-    }
+            Set<ShardNodeModel> nodeModels = nodeCacheManager.getNodes(model.getShardId())
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            nodeModels.forEach(n -> nodeCacheManager.removeFromCaffeine(n.getNodeId()));
 
-    private void handleVirtualShardCreatedMessage(CacheEvent event){
-        if (event instanceof VirtualShardCacheEvent){
-            virtualShardCacheManager.applyToVirtualShardCache(
-                    ((VirtualShardCacheEvent) event).getModels()
-            );
-            return;
+            Set<VirtualShardModel> virtualModels = virtualShardCacheManager.getVirtualShardIds(model.getShardId())
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            virtualModels.forEach(v -> virtualShardCacheManager.removeFromCaffeineCaches(v.getShardId(), v.getIdentifier()));
         }
-        throw new IllegalArgumentException("Message not instance of handleVirtualShardCreatedMessage");
     }
 }

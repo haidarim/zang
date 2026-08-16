@@ -19,6 +19,9 @@
         <grpc.server.version>3.1.0.RELEASE</grpc.server.version>
         <protobuf.version>4.29.3</protobuf.version>
         <javax.annotation.api.version>1.3.2</javax.annotation.api.version>
+        <testcontainer-core.version>2.0.2</testcontainer-core.version>
+        <testcontainer-postgresql.version>1.21.3</testcontainer-postgresql.version>
+        <postgresql-jdbc-driver.version>42.6.1</postgresql-jdbc-driver.version>
     </properties>
 
     <build>
@@ -156,6 +159,35 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jackson</artifactId>
+        </dependency>
+
+        <!-- Testcontainers core -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainer-core.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- PostgreSQL Testcontainer -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${testcontainer-postgresql.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql-jdbc-driver.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

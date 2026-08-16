@@ -7,6 +7,7 @@ import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.api.runtime.service.VirtualShardCacheManager;
 import io.github.haidarim.shard.impl.control.cache.RedisCachePublisher;
+import io.github.haidarim.shard.impl.control.cache.message.CacheMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -37,9 +38,17 @@ public class ShardMapEventListener {
 
             // VirtualShards
             updateVirtualRedisCacheAndUpdateOthers(model);
+
+            cachePublisher.publish(
+                    new CacheMessage(event)
+            );
         } else if (DELETED.equals(event.getEventType())) {
             removeFromNodeCacheAndUpdateOthers(model);
             removeFromVirtualCacheAndUpdateOthers(model);
+
+            cachePublisher.publish(
+                    new CacheMessage(event)
+            );
         }
 
     }
@@ -56,8 +65,6 @@ public class ShardMapEventListener {
             m.setDomain(model.getDomain());
         });
         nodeCacheManager.applyToSharedRedisCaches(nodeModels);
-
-        // TODO invalidate all L1s
     }
 
     private void updateVirtualRedisCacheAndUpdateOthers(ShardMapModel model){

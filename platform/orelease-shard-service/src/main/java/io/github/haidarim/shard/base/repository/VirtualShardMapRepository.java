@@ -20,7 +20,7 @@ public interface VirtualShardMapRepository extends JpaRepository<@NonNull Virtua
     @Query("SELECT vm FROM VirtualShardMap vm WHERE vm.physicalShardMap.status = 'ACTIVE'")
     List<VirtualShardMap> findAllActiveMappings();
 
-    @Query("SELECT vm FROM VirtualShardMap vm WHERE vm.physicalShardMap.status = 'ACTIVE' AND vm.id :id")
+    @Query("SELECT vm FROM VirtualShardMap vm WHERE vm.physicalShardMap.status = 'ACTIVE' AND vm.id = :id")
     Optional<VirtualShardMap> findActiveVirtualShardMapById(@Param("id") VirtualShardMapId id);
 
     @Query("SELECT vm FROM VirtualShardMap vm WHERE vm.physicalShardMap.status = 'ACTIVE' AND vm.physicalShardMap.shardId = :shardId")

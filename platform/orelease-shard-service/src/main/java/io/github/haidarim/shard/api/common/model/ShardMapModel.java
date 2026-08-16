@@ -19,4 +19,9 @@ public class ShardMapModel extends CacheModel<Integer>{
     public Integer getIdentifier() {
         return shardId;
     }
+
+    @Override
+    public Integer getShardId(){
+        return shardId;
+    }
 }

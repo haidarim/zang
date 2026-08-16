@@ -23,4 +23,9 @@ public class VirtualShardModel extends CacheModel<VirtualShardMapId> implements 
     public VirtualShardMapId getIdentifier() {
         return new VirtualShardMapId(ShardDomain.valueOf(domain), virtualShardId);
     }
+
+    @Override
+    public Integer getShardId(){
+        return shardId;
+    }
 }

@@ -8,6 +8,7 @@ import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
 import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -29,7 +30,6 @@ import static io.github.haidarim.shard.utils.LockUtils.removeLock;
  * Cache manager for {@link ShardRouteModel}
  */
 @Service
-@RequiredArgsConstructor
 public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
 
     // L1
@@ -47,6 +47,19 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
     // Helper cache to build replica routes
     private final ShardNodeCacheManager nodeCacheManager;
 
+    public ShardRouteCacheManagerImpl(
+            Cache<@NonNull Integer, Long> primaryRouteCache,
+            @Qualifier("replicaRouteCache") Cache<@NonNull Integer, Set<Long>> replicaRouteCache,
+            RedisTemplate<String, Long> primaryRedisCache,
+            @Qualifier("redisReplicaNodesStringTemplate") RedisTemplate<String, String> replicaRedisCache,
+            ShardNodeCacheManager nodeCacheManager
+    ){
+        this.primaryRouteCache = primaryRouteCache;
+        this.replicaRouteCache = replicaRouteCache;
+        this.primaryRedisCache = primaryRedisCache;
+        this.replicaRedisCache = replicaRedisCache;
+        this.nodeCacheManager = nodeCacheManager;
+    }
 
     @Override
     public Set<ShardRouteModel> getRoutes(Integer shardId){

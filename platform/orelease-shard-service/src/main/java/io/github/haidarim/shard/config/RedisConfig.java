@@ -3,6 +3,7 @@ package io.github.haidarim.shard.config;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.impl.control.cache.RedisCacheSubscriber;
+import io.github.haidarim.shard.impl.control.cache.message.CacheMessage;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,8 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.type.CollectionType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +30,16 @@ public class RedisConfig {
     @Bean
     public StringRedisSerializer redisStringSerializer(){
         return new StringRedisSerializer();
+    }
+
+    @Bean
+    public JacksonJsonRedisSerializer<@NonNull Set<VirtualShardModel>> virtualShardSetSerializer(
+            ObjectMapper objectMapper
+    ) {
+        CollectionType type = objectMapper.getTypeFactory()
+                .constructCollectionType(Set.class, VirtualShardModel.class);
+
+        return new JacksonJsonRedisSerializer<>(objectMapper, type);
     }
 
     @Bean
@@ -54,7 +67,19 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, String> redisStringTemplate(
+    public RedisTemplate<String, String> redisShardIndexStringTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                redisStringSerializer
+        );
+    }
+
+    @Bean
+    public RedisTemplate<String, String> redisReplicaNodesStringTemplate(
             RedisConnectionFactory redisConnectionFactory,
             StringRedisSerializer redisStringSerializer
     ){
@@ -87,6 +112,18 @@ public class RedisConfig {
                 redisConnectionFactory,
                 redisStringSerializer,
                 valueSerializer
+        );
+    }
+
+    @Bean
+    public RedisTemplate<String, CacheMessage> redisCacheMessageTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            StringRedisSerializer redisStringSerializer
+    ){
+        return createTemplate(
+                redisConnectionFactory,
+                redisStringSerializer,
+                new JacksonJsonRedisSerializer<>(CacheMessage.class)
         );
     }
 

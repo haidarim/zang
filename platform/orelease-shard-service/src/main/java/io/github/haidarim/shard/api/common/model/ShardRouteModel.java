@@ -28,4 +28,9 @@ public class ShardRouteModel extends CacheModel<Integer> implements Serializable
     public Integer getIdentifier() {
         return shardId;
     }
+
+    @Override
+    public Integer getShardId(){
+        return shardId;
+    }
 }

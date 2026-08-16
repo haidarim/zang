@@ -7,6 +7,7 @@ import io.github.haidarim.shard.base.repository.ShardNodeRepository;
 import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -23,7 +24,6 @@ import static io.github.haidarim.shard.utils.LockUtils.removeLock;
 import com.github.benmanes.caffeine.cache.Cache;
 
 @Service
-@RequiredArgsConstructor
 public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
 
     // L1
@@ -41,6 +41,19 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     private final Map<Long, ReentrantLock> nodeLocks = new ConcurrentHashMap<>();
     private final Map<Integer, ReentrantLock> shardLocks = new ConcurrentHashMap<>();
 
+    public ShardNodeCacheManagerImpl(
+            Cache<@NonNull Long, ShardNodeModel> nodeCache,
+            @Qualifier("shardNodeIdByShardIdCache") Cache<@NonNull Integer, Set<Long>> shardIndexCache,
+            RedisTemplate<String, ShardNodeModel> nodeRedisCache,
+            @Qualifier("redisShardIndexStringTemplate") RedisTemplate<String, String> shardIndexRedisCache,
+            ShardNodeRepository repository
+    ){
+        this.nodeCache = nodeCache;
+        this.shardIndexCache = shardIndexCache;
+        this.nodeRedisCache = nodeRedisCache;
+        this.shardIndexRedisCache = shardIndexRedisCache;
+        this.repository = repository;
+    }
 
 
     @Override
@@ -85,11 +98,11 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     @Override
     public void removeFromCaffeine(Long nodeId) {
         ShardNodeModel model = nodeCache.getIfPresent(nodeId);
-        nodeCache.invalidate(nodeId);
-
-        if (model != null){
-            removeFromShardIndexCache(model.getShardId(), nodeId);
+        if (model == null) {
+            return;
         }
+        nodeCache.invalidate(nodeId);
+        removeFromShardIndexCache(model.getShardId(), nodeId);
     }
 
     @Override

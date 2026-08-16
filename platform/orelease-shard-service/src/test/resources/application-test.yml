@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: test
+    password: test
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      new_generator_mappings: true
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: secret_passwd
+      timeout: 2000ms
+
+
+
+caffeine:
+  node-cache:
+    max-size: 5_000
+  node-cache-by-id:
+    max-size: 5_000
+  primary-route-cache:
+    max-size: 5_000
+  replica-route-cache:
+    max-size: 5_000
+  virtual-shard-cache:
+    max-size: 5_000
+  shard-index-cache:
+    max-size: 5_000
