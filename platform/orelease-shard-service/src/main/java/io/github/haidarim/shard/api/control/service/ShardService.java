@@ -25,7 +25,7 @@ public interface ShardService {
     ShardMap getShard(String shardName);
 
     /**
-     * Returns all shard maps for giben database and domain
+     * Returns all shard maps for given database and domain
      * @param databaseName String
      * @param domain {@link io.github.haidarim.shard.api.common.type.ShardDomain}
      * @return shardMaps List
@@ -38,11 +38,25 @@ public interface ShardService {
      * @param databaseName String
      * @param domain {@link ShardDomain}
      * @param status {@link io.github.haidarim.shard.api.common.type.ShardStatus}
-     * @return
+     * @return shard {@link ShardMap}
      */
     ShardMap createShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status);
 
+    /**
+     * Update shard
+     * @param shardName String
+     * @param databaseName String
+     * @param domain ShardDomain
+     * @param status ShardStatus
+     * @param expectedVersion Long
+     * @return shard {@link ShardMap}
+     */
     ShardMap updateShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status, Long expectedVersion);
 
+    /**
+     * Delete shard
+     * @param shardName String
+     * @return shardId Integer
+     */
     Integer deleteShard(String shardName);
 }

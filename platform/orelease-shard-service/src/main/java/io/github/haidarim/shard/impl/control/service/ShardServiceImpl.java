@@ -39,11 +39,18 @@ public class ShardServiceImpl implements ShardService {
 
     @Override
     public ShardMap getShard(String shardName) {
-        return shardMapRepository.findByShardName(shardName).orElseThrow(() -> new ShardNotFoundException(shardName));
+        if (shardName == null || shardName.isBlank()){
+            throw new ShardValidationException("Shard name cannot be null or blank");
+        }
+        return shardMapRepository.findByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
     }
 
     @Override
     public List<ShardMap> getShardsForDatabase(String databaseName, ShardDomain domain) {
+        if(databaseName == null || databaseName.isBlank() || domain == null){
+            throw new ShardValidationException("Invalid database name or domain");
+        }
+
         return shardMapRepository.findShardsForDatabase(databaseName, domain);
     }
 
@@ -66,6 +73,10 @@ public class ShardServiceImpl implements ShardService {
     @Override
     @Transactional
     public ShardMap updateShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status, Long expectedVersion) {
+        if (shardName == null || shardName.isBlank()){
+            throw new ShardValidationException("Shard name cannot be null or blank");
+        }
+
         ShardMap shard = shardMapRepository.findByShardName(shardName).orElseThrow(() -> new ShardNotFoundException(shardName));
         validateShardVersion(shard.getVersion(), expectedVersion);
 
@@ -109,6 +120,10 @@ public class ShardServiceImpl implements ShardService {
     @Override
     @Transactional
     public Integer deleteShard(String shardName) {
+        if (shardName == null || shardName.isBlank()){
+            throw new ShardValidationException("Shard name cannot be null or blank");
+        }
+
         ShardMap shard = shardMapRepository.findByShardName(shardName).orElseThrow(() -> new ShardNotFoundException(shardName));
         validateForShardDeletion(shard.getShardId());
         shardMapRepository.delete(shard);
