@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @NonNull Long> {
@@ -36,5 +35,9 @@ public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @
     @Query("SELECT node FROM ShardNode node WHERE node.nodeStatus = 'ONLINE' AND node.nodeRole = 'REPLICA'")
     List<ShardNode> findAllOnlineAndReplicaNodes();
 
-    List<ShardNode> findByNodeShardMap_ShardId(Integer shardId);
+    @Query("SELECT node FROM ShardNode node WHERE node.nodeStatus = 'ONLINE' AND node.nodeShardMap.status = 'ACTIVE' AND node.nodeShardMap.shardId = :shardId")
+    List<ShardNode> findOnlineAndActiveNodesByShardId(Integer shardId);
+
+    @Query("SELECT node FROM ShardNode node WHERE node.nodeStatus = 'ONLINE' AND node.nodeShardMap.status = 'ACTIVE'")
+    List<ShardNode> findAllOnlineAndActiveNodes();
 }

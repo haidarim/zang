@@ -7,7 +7,6 @@ import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
 import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,6 +21,7 @@ import java.util.stream.Collectors;
 import static io.github.haidarim.shard.api.common.type.NodeRole.PRIMARY;
 import static io.github.haidarim.shard.api.common.type.NodeRole.REPLICA;
 import static io.github.haidarim.shard.api.common.type.NodeStatus.ONLINE;
+import static io.github.haidarim.shard.api.common.type.ShardStatus.ACTIVE;
 import static io.github.haidarim.shard.impl.control.cache.CacheProperty.*;
 import static io.github.haidarim.shard.utils.CacheUtils.*;
 import static io.github.haidarim.shard.utils.LockUtils.removeLock;
@@ -158,7 +158,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
         Map<Integer, Set<Long>> replicaNodes = new HashMap<>();
         nodes.values()
                 .stream()
-                .filter(node -> ONLINE.equals(node.getStatus()))
+                .filter(node -> ONLINE.equals(node.getNodeStatus()))
                 .forEach(node -> {
                     if(PRIMARY.equals(node.getRole())){
                         primaryNodes.put(node.getShardId(), node.getNodeId());
@@ -277,7 +277,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
 
         Long nodeId = nodeModels
                 .stream()
-                .filter(node -> PRIMARY.equals(node.getRole()) && ONLINE.equals(node.getStatus()))
+                .filter(node -> PRIMARY.equals(node.getRole()) && ONLINE.equals(node.getNodeStatus()) && ACTIVE.equals(node.getShardStatus()))
                 .map(ShardNodeModel::getNodeId)
                 .findFirst()
                 .orElse(null);
@@ -298,7 +298,7 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
         }
 
         Set<Long> nodeIds = nodes.stream()
-                .filter(node -> REPLICA.equals(node.getRole()) && ONLINE.equals(node.getStatus()))
+                .filter(node -> REPLICA.equals(node.getRole()) && ONLINE.equals(node.getNodeStatus()) && ACTIVE.equals(node.getShardStatus()))
                 .map(ShardNodeModel::getNodeId)
                 .collect(Collectors.toSet());
 

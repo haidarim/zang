@@ -1,6 +1,7 @@
 package io.github.haidarim.shard.base.repository;
 
 
+import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.base.entity.VirtualShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMapId;
 import lombok.NonNull;
@@ -25,4 +26,12 @@ public interface VirtualShardMapRepository extends JpaRepository<@NonNull Virtua
 
     @Query("SELECT vm FROM VirtualShardMap vm WHERE vm.physicalShardMap.status = 'ACTIVE' AND vm.physicalShardMap.shardId = :shardId")
     List<VirtualShardMap> findAllActiveVirtualIdsByShardId(@Param("shardId") Integer shardId);
+
+    boolean existsById_Domain(ShardDomain domain);
+
+    List<VirtualShardMap> findAllById_Domain(ShardDomain domain);
+
+    List<VirtualShardMap> findAllById_DomainOrderById_VirtualShardId(
+            ShardDomain domain
+    );
 }

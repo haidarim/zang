@@ -96,7 +96,8 @@ public class ShardGrpcApiService extends ShardMapApiServiceGrpc.ShardMapApiServi
     @Override
     public void updateShard(UpdateShardRequest request, StreamObserver<UpdateShardResponse> responseStreamObserver){
         try {
-            ShardMap shard = shardService.updateShard(request.getShardName(), request.getDatabaseName(), io.github.haidarim.shard.api.common.type.ShardDomain.valueOf(request.getDomain().name()), io.github.haidarim.shard.api.common.type.ShardStatus.valueOf(request.getStatus().name()), request.getExpectedVersion());
+            ShardMap shard = shardService
+                    .updateShard(request.getShardName(), request.getDatabaseName(), io.github.haidarim.shard.api.common.type.ShardStatus.valueOf(request.getStatus().name()), request.getExpectedVersion());
             UpdateShardResponse response = UpdateShardResponse.newBuilder()
                     .setShardId(shard.getShardId())
                     .setShardName(shard.getShardName())

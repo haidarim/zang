@@ -1,5 +1,6 @@
 package io.github.haidarim.shard.api.control.service;
 
+import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.base.entity.ShardMap;
 
 /**
@@ -7,5 +8,7 @@ import io.github.haidarim.shard.base.entity.ShardMap;
  */
 public interface VirtualShardService {
 
-    void initializeMappingForShard(ShardMap shard);
+    void initializeOrRebalanceVirtualShards(ShardMap shard);
+
+    void rebalanceBeforeShardDeletion(ShardMap shard);
 }

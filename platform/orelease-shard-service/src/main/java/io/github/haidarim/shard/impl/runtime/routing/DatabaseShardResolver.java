@@ -27,14 +27,43 @@ public class DatabaseShardResolver implements ShardResolver {
         int virtualShard = calculator.calculate(entityId);
         VirtualShardModel virtualShardModel = virtualShardCacheManager.getVirtualShard(virtualShard, domain);
 
-        if (WRITE.equals(routeIntent)) {
-            return routeCacheManager.getPrimaryRoute(virtualShardModel.getShardId());
+        if (virtualShardModel == null) {
+            throw new IllegalStateException(
+                    "No virtual shard mapping for domain=" + domain
+                            + ", virtualShardId=" + virtualShard
+            );
         }
 
-        // TODO make later better decision on e.g. region, distance, ...
-        return routeCacheManager.getReplicaRoutes(virtualShardModel.getShardId())
+
+        Integer shardId = virtualShardModel.getShardId();
+
+        if (WRITE.equals(routeIntent)) {
+            return requirePrimaryRoute(shardId);
+        }
+
+        return requireReplicaRoute(shardId);
+    }
+
+    private ShardRouteModel requirePrimaryRoute(Integer shardId) {
+        ShardRouteModel route = routeCacheManager.getPrimaryRoute(shardId);
+
+        if (route == null) {
+            throw new IllegalStateException(
+                    "No active primary route available for shardId=" + shardId
+            );
+        }
+
+        return route;
+    }
+
+    private ShardRouteModel requireReplicaRoute(Integer shardId) {
+        return routeCacheManager.getReplicaRoutes(shardId)
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No route found"));
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No active replica route available for shardId=" + shardId
+                        )
+                );
     }
 }

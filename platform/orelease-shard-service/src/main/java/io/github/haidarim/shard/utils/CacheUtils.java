@@ -3,7 +3,6 @@ package io.github.haidarim.shard.utils;
 import io.github.haidarim.shard.api.common.model.CacheModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.model.ShardRouteModel;
-import io.github.haidarim.shard.api.common.type.RouteIntent;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -56,13 +55,14 @@ public final class CacheUtils {
                 .nodeId(node.getNodeId())
                 .shardId(node.getNodeShardMap().getShardId())
                 .shardName(node.getNodeShardMap().getShardName())
+                .shardStatus(node.getNodeShardMap().getStatus())
                 .databaseName(node.getNodeShardMap().getDatabaseName())
                 .hostName(node.getHostName())
                 .port(node.getPort())
                 .region(node.getRegion())
                 .domain(node.getNodeShardMap().getDomain())
                 .role(node.getNodeRole())
-                .status(node.getNodeStatus())
+                .nodeStatus(node.getNodeStatus())
                 .connectionSecret(node.getConnectionSecret())
                 .nodeVersion(node.getVersion())
                 .shardVersion(node.getNodeShardMap().getVersion())
@@ -80,18 +80,6 @@ public final class CacheUtils {
                 .port(nodeModel.getPort())
                 .shardVersion(nodeModel.getShardVersion())
                 .nodeVersion(nodeModel.getNodeVersion())
-                .build();
-    }
-
-    public static ShardRouteModel mapToRouteModel(ShardNode node){
-        return ShardRouteModel.builder()
-                .shardId(node.getNodeShardMap().getShardId())
-                .shardName(node.getNodeShardMap().getShardName())
-                .databaseName(node.getNodeShardMap().getDatabaseName())
-                .hostName(node.getHostName())
-                .port(node.getPort())
-                .shardVersion(node.getNodeShardMap().getVersion())
-                .nodeVersion(node.getVersion())
                 .build();
     }
 }

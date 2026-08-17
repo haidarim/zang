@@ -1,6 +1,7 @@
 package io.github.haidarim.shard.base.repository;
 
 import io.github.haidarim.shard.api.common.type.ShardDomain;
+import io.github.haidarim.shard.api.common.type.ShardStatus;
 import io.github.haidarim.shard.base.entity.ShardMap;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,4 +21,6 @@ public interface ShardMapRepository extends JpaRepository<@NonNull ShardMap, @No
     List<ShardMap> findShardsForDatabase(@Param("databaseName") String databaseName, @Param("domain") ShardDomain domain);
 
     boolean existsByShardName(String shardName);
+
+    List<ShardMap> findAllByDomainAndStatusOrderByShardId(ShardDomain domain, ShardStatus status);
 }

@@ -6,7 +6,6 @@ import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
 import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static io.github.haidarim.shard.api.common.type.NodeStatus.ONLINE;
+import static io.github.haidarim.shard.api.common.type.ShardStatus.ACTIVE;
 import static io.github.haidarim.shard.impl.control.cache.CacheProperty.*;
 import static io.github.haidarim.shard.utils.CacheUtils.*;
 import static io.github.haidarim.shard.utils.LockUtils.removeLock;
@@ -131,7 +132,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
 
     @Override
     public void refresh(){
-        Set<ShardNodeModel> nodes = repository.findAll()
+        Set<ShardNodeModel> nodes = repository.findAllOnlineAndActiveNodes()
                 .stream()
                 .map(CacheUtils::mapToShardNodeModel).collect(Collectors.toSet());
         clear();
@@ -327,7 +328,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     private ShardNodeModel fetchFromDbAndUpdateCache(Long nodeId){
         ShardNode node = repository.findById(nodeId).orElse(null);
 
-        if(node == null){
+        if(node == null || !(ONLINE.equals(node.getNodeStatus()) && ACTIVE.equals(node.getNodeShardMap().getStatus()))){
             return null;
         }
 
@@ -339,7 +340,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
 
     private Set<ShardNodeModel> fetchNodesFromDbAndUpdateCache(Integer shardId) {
         Set<ShardNodeModel> models = repository
-                .findByNodeShardMap_ShardId(shardId)
+                .findOnlineAndActiveNodesByShardId(shardId)
                 .stream()
                 .map(CacheUtils::mapToShardNodeModel)
                 .collect(Collectors.toSet());

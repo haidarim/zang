@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static io.github.haidarim.shard.api.common.type.ShardStatus.ACTIVE;
+
 @Service
 @RequiredArgsConstructor
 public class ShardServiceImpl implements ShardService {
@@ -63,16 +65,16 @@ public class ShardServiceImpl implements ShardService {
         validateFieldsAreNotNull(shardName, databaseName, domain, status);
 
         ShardMap shard = new ShardMap(shardName.trim(), databaseName.trim(), domain, status);
-        shardMapRepository.save(shard);
+        shardMapRepository.saveAndFlush(shard);
 
-        virtualShardService.initializeMappingForShard(shard);
+        virtualShardService.initializeOrRebalanceVirtualShards(shard);
 
         return shard;
     }
 
     @Override
     @Transactional
-    public ShardMap updateShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status, Long expectedVersion) {
+    public ShardMap updateShard(String shardName, String databaseName, ShardStatus status, Long expectedVersion) {
         if (shardName == null || shardName.isBlank()){
             throw new ShardValidationException("Shard name cannot be null or blank");
         }
@@ -87,17 +89,13 @@ public class ShardServiceImpl implements ShardService {
                     .databaseName(databaseName);
         }
 
-        if(domain != null && !domain.equals(shard.getDomain())){
-            shard.setDomain(domain);
-            modelBuilder = (modelBuilder != null) ? modelBuilder.domain(domain) : ShardMapModel.builder().domain(domain);
-        }
-
         if(status != null && !status.equals(shard.getStatus())){
+            checkUpdatesForNewStatus(shard, status);
             shard.setStatus(status);
             modelBuilder = (modelBuilder != null) ? modelBuilder.status(status) : ShardMapModel.builder().status(status);
         }
 
-        if (modelBuilder != null){
+        if (modelBuilder != null && (status == null || status.equals(ACTIVE))){
             shard = shardMapRepository.saveAndFlush(shard);
             eventPublisher.publishEvent(
                     new ShardMapCacheEvent(
@@ -126,6 +124,7 @@ public class ShardServiceImpl implements ShardService {
 
         ShardMap shard = shardMapRepository.findByShardName(shardName).orElseThrow(() -> new ShardNotFoundException(shardName));
         validateForShardDeletion(shard.getShardId());
+        virtualShardService.rebalanceBeforeShardDeletion(shard);
         shardMapRepository.delete(shard);
         eventPublisher.publishEvent(
                 new ShardMapCacheEvent(
@@ -175,6 +174,20 @@ public class ShardServiceImpl implements ShardService {
         // virtual mapping
         if (virtualShardRepository.existsByPhysicalShardMap_ShardId(shardId)){
             throw new ShardValidationException("Shard cannot be deleted, virtual shard exists for shard", shardId.toString());
+        }
+    }
+
+    private void checkUpdatesForNewStatus(ShardMap shard, ShardStatus newStatus){
+        if(!ACTIVE.equals(newStatus)){
+            virtualShardService.rebalanceBeforeShardDeletion(shard);
+            eventPublisher.publishEvent(
+                    new ShardMapCacheEvent(
+                            ShardMapModel.builder()
+                                    .shardId(shard.getShardId())
+                                    .build(),
+                            CacheProperty.CacheEventType.DELETED
+                    )
+            );
         }
     }
 }

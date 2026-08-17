@@ -42,11 +42,11 @@ public class RedisCacheSubscriber implements MessageListener {
 
         switch (event.getEntity()) {
             case VIRTUAL_SHARD -> {
-
+                invalidateLocalCachesForVirtualShard(event);
                 break;
             }
             case SHARD_MAP -> {
-                invalidateLocalCaches(event);
+                invalidateLocalCachesForShard(event);
                 break;
             }
             case SHARD_NODE -> {
@@ -59,9 +59,9 @@ public class RedisCacheSubscriber implements MessageListener {
         }
     }
 
-    private void invalidateLocalCaches(CacheEvent event){
+    private void invalidateLocalCachesForShard(CacheEvent event){
         boolean shouldInvalidateShard = (event instanceof ShardMapCacheEvent) &&
-                (UPDATED.equals(event.getEventType()) || DELETED.equals(event.getEventType()));
+                (UPDATED.equals(event.getEventType()) || DELETED.equals(event.getEventType())|| REPAIR.equals(event.getEventType()));
         if(shouldInvalidateShard){
             ShardMapModel model = ((ShardMapCacheEvent) event).getModel();
 
@@ -76,6 +76,17 @@ public class RedisCacheSubscriber implements MessageListener {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
             virtualModels.forEach(v -> virtualShardCacheManager.removeFromCaffeineCaches(v.getShardId(), v.getIdentifier()));
+        }
+    }
+
+    private void invalidateLocalCachesForVirtualShard(CacheEvent event){
+        boolean shouldInvalidateVirtualShards = (event instanceof VirtualShardCacheEvent) &&
+                (UPDATED.equals(event.getEventType()) || DELETED.equals(event.getEventType()) || REPAIR.equals(event.getEventType()));
+        if(shouldInvalidateVirtualShards){
+            Set<VirtualShardModel> models  = ((VirtualShardCacheEvent) event).getModels();
+            models.forEach(m ->
+                    virtualShardCacheManager.removeFromCaffeineCaches(m.getShardId(), m.getIdentifier())
+            );
         }
     }
 }

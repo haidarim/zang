@@ -42,16 +42,15 @@ public interface ShardService {
      */
     ShardMap createShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status);
 
-    /**
+    /** // TODO remove domain from porto
      * Update shard
      * @param shardName String
      * @param databaseName String
-     * @param domain ShardDomain
      * @param status ShardStatus
      * @param expectedVersion Long
      * @return shard {@link ShardMap}
      */
-    ShardMap updateShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status, Long expectedVersion);
+    ShardMap updateShard(String shardName, String databaseName, ShardStatus status, Long expectedVersion);
 
     /**
      * Delete shard
