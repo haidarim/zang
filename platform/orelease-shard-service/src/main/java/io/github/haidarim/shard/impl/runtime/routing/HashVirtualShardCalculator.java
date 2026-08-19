@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 import static io.github.haidarim.shard.api.common.constants.ShardConstants.ENTITY_ID_CANNOT_BE_NULL;
-import static io.github.haidarim.shard.api.common.constants.ShardConstants.VIRTUAL_SHARDS;
+import static io.github.haidarim.shard.api.common.constants.ShardConstants.VIRTUAL_SHARD_SIZE;
 
 @Component
 public class HashVirtualShardCalculator implements VirtualSharCalculator {
@@ -20,6 +20,6 @@ public class HashVirtualShardCalculator implements VirtualSharCalculator {
         long hash = entityId.getLeastSignificantBits()
                 ^ entityId.getMostSignificantBits();
 
-        return Math.floorMod(hash, VIRTUAL_SHARDS);
+        return Math.floorMod(hash, VIRTUAL_SHARD_SIZE);
     }
 }

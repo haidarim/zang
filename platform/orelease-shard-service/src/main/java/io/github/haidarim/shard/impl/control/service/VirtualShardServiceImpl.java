@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.github.haidarim.shard.api.common.constants.ShardConstants.LARGE_PRIME_NUMBER;
-import static io.github.haidarim.shard.api.common.constants.ShardConstants.VIRTUAL_SHARDS;
+import static io.github.haidarim.shard.api.common.constants.ShardConstants.VIRTUAL_SHARD_SIZE;
 
 @Service
 @RequiredArgsConstructor
@@ -53,9 +53,6 @@ public class VirtualShardServiceImpl implements VirtualShardService {
 
         List<ShardMap> shards = shardMapRepository.findAllByDomainAndStatusOrderByShardId(domain, ShardStatus.ACTIVE);
 
-        if(shards.isEmpty()){
-            throw  new IllegalStateException("No Active shards available for domain: " + domain);
-        }
 
         List<ShardMap> remainingShards = shards.stream()
                 .filter(s -> !shard.getShardId().equals(s.getShardId()))
@@ -90,7 +87,7 @@ public class VirtualShardServiceImpl implements VirtualShardService {
 
     private void initializeVirtualShards(ShardMap newShard){
         List<VirtualShardMap> newVirtualShards  = new ArrayList<>();
-        for (int virtualShardId = 0; virtualShardId < VIRTUAL_SHARDS; virtualShardId++){
+        for (int virtualShardId = 0; virtualShardId < VIRTUAL_SHARD_SIZE; virtualShardId++){
             VirtualShardMapId id =
                     new VirtualShardMapId(
                             newShard.getDomain(),

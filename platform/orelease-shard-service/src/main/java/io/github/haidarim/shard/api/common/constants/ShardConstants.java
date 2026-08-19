@@ -2,7 +2,7 @@ package io.github.haidarim.shard.api.common.constants;
 
 public interface ShardConstants {
 
-    int VIRTUAL_SHARDS = 1024;
+    int VIRTUAL_SHARD_SIZE = 1024;
 
     long LARGE_PRIME_NUMBER = 1125899906842597L;
 
