@@ -42,7 +42,7 @@ public interface ShardService {
      */
     ShardMap createShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status);
 
-    /** // TODO remove domain from porto
+    /**
      * Update shard
      * @param shardName String
      * @param databaseName String

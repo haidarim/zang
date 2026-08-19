@@ -5,6 +5,8 @@ import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
 import io.github.haidarim.shard.utils.CacheUtils;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisCallback;
@@ -56,6 +58,14 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
         this.repository = repository;
     }
 
+    @PostConstruct
+    public void init(){
+        nodeCache.invalidateAll();
+        shardIndexCache.invalidateAll();
+
+        nodeLocks.clear();
+        shardLocks.clear();
+    }
 
     @Override
     public ShardNodeModel getNode(Long nodeId) {
@@ -226,6 +236,17 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     @Override
     public Map<Long, ShardNodeModel> getAll(){
         return Map.copyOf(nodeCache.asMap());
+    }
+
+    @PreDestroy
+    public void destroy(){
+        nodeCache.invalidateAll();
+        shardIndexCache.invalidateAll();
+
+        nodeLocks.clear();
+        shardLocks.clear();
+
+        clearRedisCache();
     }
 
     private ShardNodeModel resolveNode(Long nodeId){

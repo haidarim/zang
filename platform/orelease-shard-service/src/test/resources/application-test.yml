@@ -27,13 +27,19 @@ spring:
 caffeine:
   node-cache:
     max-size: 5_000
+    ttl-minutes: 10
   node-cache-by-id:
     max-size: 5_000
+    ttl-minutes: 10
   primary-route-cache:
     max-size: 5_000
+    ttl-minutes: 10
   replica-route-cache:
     max-size: 5_000
+    ttl-minutes: 10
   virtual-shard-cache:
     max-size: 5_000
+    ttl-minutes: 10
   shard-index-cache:
     max-size: 5_000
+    ttl-minutes: 10

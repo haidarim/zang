@@ -2,7 +2,6 @@ package io.github.haidarim.shard.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
-import io.github.haidarim.shard.api.common.model.ShardRouteModel;
 import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.base.entity.VirtualShardMapId;
 import org.jspecify.annotations.NonNull;
@@ -11,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.github.benmanes.caffeine.cache.Cache;
 
+import java.time.Duration;
 import java.util.Set;
 
 @Configuration
@@ -18,55 +18,67 @@ public class CacheConfig {
 
     @Bean
     public Cache<@NonNull Long, ShardNodeModel> shardNodeByIdCache(
-            @Value("${caffeine.node-cache.max-size}") long  maxsize
+            @Value("${caffeine.node-cache.max-size}") long  maxsize,
+            @Value("${caffeine.node-cache.ttl-minutes}") long ttl
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)
+                .expireAfterAccess(Duration.ofMinutes(ttl))
                 .build();
     }
 
     @Bean
     public Cache<@NonNull Integer, Set<Long>> shardNodeIdByShardIdCache(
-            @Value("${caffeine.node-cache-by-id.max-size}") long  maxsize
+            @Value("${caffeine.node-cache-by-id.max-size}") long  maxsize,
+            @Value("${caffeine.node-cache-by-id.ttl-minutes}") long ttl
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)
+                .expireAfterAccess(Duration.ofMinutes(ttl))
                 .build();
     }
 
     @Bean
     public Cache<@NonNull Integer, Long> primaryRouteCache(
-            @Value("${caffeine.primary-route-cache.max-size}") long  maxsize
+            @Value("${caffeine.primary-route-cache.max-size}") long  maxsize,
+            @Value("${caffeine.primary-route-cache.ttl-minutes}") long ttl
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)
+                .expireAfterAccess(Duration.ofMinutes(ttl))
                 .build();
     }
 
     @Bean
     public Cache<@NonNull Integer, Set<Long>> replicaRouteCache(
-            @Value("${caffeine.replica-route-cache.max-size}") long  maxsize
+            @Value("${caffeine.replica-route-cache.max-size}") long  maxsize,
+            @Value("${caffeine.replica-route-cache.ttl-minutes}") long ttl
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)
+                .expireAfterAccess(Duration.ofMinutes(ttl))
                 .build();
     }
 
     @Bean
     public Cache<@lombok.NonNull VirtualShardMapId, VirtualShardModel> virtualShardCache(
-            @Value("${caffeine.virtual-shard-cache.max-size}") long  maxsize
+            @Value("${caffeine.virtual-shard-cache.max-size}") long  maxsize,
+            @Value("${caffeine.virtual-shard-cache.ttl-minutes}") long ttl
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)
+                .expireAfterAccess(Duration.ofMinutes(ttl))
                 .build();
     }
 
     @Bean
     public Cache<@lombok.NonNull Integer, Set<VirtualShardModel>> shardIndexCache(
-            @Value("${caffeine.shard-index-cache.max-size}") long  maxsize
+            @Value("${caffeine.shard-index-cache.max-size}") long  maxsize,
+            @Value("${caffeine.shard-index-cache.ttl-minutes}") long ttl
     ){
         return Caffeine.newBuilder()
                 .maximumSize(maxsize)
+                .expireAfterAccess(Duration.ofMinutes(ttl))
                 .build();
     }
 }

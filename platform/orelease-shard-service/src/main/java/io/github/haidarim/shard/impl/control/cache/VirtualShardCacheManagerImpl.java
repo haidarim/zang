@@ -7,6 +7,8 @@ import io.github.haidarim.shard.api.runtime.service.VirtualShardCacheManager;
 import io.github.haidarim.shard.base.entity.VirtualShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMapId;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisCallback;
@@ -39,6 +41,14 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
     private final Map<VirtualShardMapId, ReentrantLock> virtualShardLocks = new ConcurrentHashMap<>();
     private final Map<Integer, ReentrantLock> shardIndexLocks = new ConcurrentHashMap<>();
 
+    @PostConstruct
+    public void init(){
+        virtualShardCache.invalidateAll();
+        shardIndexCache.invalidateAll();
+
+        virtualShardLocks.clear();
+        shardIndexLocks.clear();
+    }
 
     @Override
     public VirtualShardModel getVirtualShard(Integer virtualId, ShardDomain domain) {
@@ -196,6 +206,17 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
     @Override
     public Map<VirtualShardMapId, VirtualShardModel> getAll() {
         return Map.copyOf(virtualShardCache.asMap());
+    }
+
+    @PreDestroy
+    public void destroy(){
+        virtualShardCache.invalidateAll();
+        shardIndexCache.invalidateAll();
+
+        virtualShardLocks.clear();
+        shardIndexLocks.clear();
+
+        clearRedisCache();
     }
 
     private void clearRedisCache(){

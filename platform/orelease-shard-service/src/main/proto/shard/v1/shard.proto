@@ -114,9 +114,8 @@ message CreateShardResponse{
 message UpdateShardRequest{
     string shard_name = 1;
     string database_name = 2;
-    ShardDomain domain = 3;
-    ShardStatus status = 4;
-    int64 expected_version = 5;
+    ShardStatus status = 3;
+    int64 expected_version = 4;
 }
 
 message UpdateShardResponse{

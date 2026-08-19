@@ -156,7 +156,7 @@ public class ShardIntegrationTest extends AbstractIntegrationTest {
         shardService.updateShard(TEST_SHARD_NAME_A, TEST_DATABASE_NAME_B, ShardStatus.INACTIVE, 0L);
         ShardMap shard = repository.findByShardName(TEST_SHARD_NAME_A).orElseThrow(()-> new AssertionFailure("Failed to find shard with this shardName"));
 
-        assertEquals(2L, shard.getVersion()); // Version is 2 since two updated was done (databaseNAme & ShardStatus)
+        assertEquals(1L, shard.getVersion());
         assertEquals(TEST_DATABASE_NAME_B, shard.getDatabaseName());
         assertEquals(ShardStatus.INACTIVE, shard.getStatus());
     }

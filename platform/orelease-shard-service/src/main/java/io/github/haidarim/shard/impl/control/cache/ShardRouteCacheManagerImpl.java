@@ -6,6 +6,8 @@ import io.github.haidarim.shard.api.common.model.ShardRouteModel;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
 import io.github.haidarim.shard.utils.CacheUtils;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisCallback;
@@ -59,6 +61,15 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
         this.primaryRedisCache = primaryRedisCache;
         this.replicaRedisCache = replicaRedisCache;
         this.nodeCacheManager = nodeCacheManager;
+    }
+
+    @PostConstruct
+    public void init(){
+        primaryRouteCache.invalidateAll();
+        replicaRouteCache.invalidateAll();
+
+        primaryLocks.clear();
+        replicaLocks.clear();
     }
 
     @Override
@@ -241,6 +252,17 @@ public class ShardRouteCacheManagerImpl implements ShardRouteCacheManager {
     public void removeFromCaffeine(Integer shardId){
         primaryRouteCache.invalidate(shardId);
         replicaRouteCache.invalidate(shardId);
+    }
+
+    @PreDestroy
+    public void destroy(){
+        primaryRouteCache.invalidateAll();
+        replicaRouteCache.invalidateAll();
+
+        primaryLocks.clear();
+        replicaLocks.clear();
+
+        clearRedisCache();
     }
 
     private Long resolvePrimaryNodeId(Integer shardId){
