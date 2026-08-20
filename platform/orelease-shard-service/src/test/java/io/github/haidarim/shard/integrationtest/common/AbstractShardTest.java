@@ -18,16 +18,16 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @ActiveProfiles("test")
 public class AbstractShardTest {
 
-    private static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:15")
+    protected static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>("postgres:15")
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");
 
-    private static final GenericContainer<?> redisContainer =
+    protected static final GenericContainer<?> redisContainer =
             new GenericContainer<>("redis:7")
                     .withExposedPorts(6379);
 
-    private static ManagedChannel channel;
+    protected static ManagedChannel channel;
 
     static {
         postgresContainer.start();
@@ -43,9 +43,5 @@ public class AbstractShardTest {
         channel = ManagedChannelBuilder.forAddress("localhost", 9090)
                 .usePlaintext()
                 .build();
-    }
-
-    protected ManagedChannel getChannel(){
-        return channel;
     }
 }
