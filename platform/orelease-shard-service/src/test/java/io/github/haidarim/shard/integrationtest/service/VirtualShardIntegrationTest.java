@@ -10,6 +10,7 @@ import io.github.haidarim.shard.base.repository.ShardMapRepository;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
 import io.github.haidarim.shard.integrationtest.common.AbstractShardTest;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,8 +37,11 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
     @Autowired
     ShardMapRepository shardMapRepository;
 
-    @Override
-    public void preTest(){
+    @BeforeEach
+    public void before(){
+        virtualShardMapRepository.deleteAll();
+        shardMapRepository.deleteAll();
+
         List<String> shardNames = getShardNames();
         shardNames.forEach(shardName -> {
             ShardMap shard = shardService.createShard(
