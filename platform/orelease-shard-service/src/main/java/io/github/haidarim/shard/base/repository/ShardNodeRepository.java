@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @NonNull Long> {
@@ -28,6 +29,7 @@ public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @
     );
 
     boolean existsByNodeShardMap_ShardId(Integer shardId);
+    boolean existsByNodeShardMap_ShardNameAndHostNameAndPort(String shardName, String hostName, Integer port);
 
     @Query("SELECT node FROM ShardNode node WHERE node.nodeStatus = 'ONLINE' AND node.nodeRole = 'PRIMARY'")
     List<ShardNode> findAllOnlineAndPrimaryNodes();
@@ -40,4 +42,8 @@ public interface ShardNodeRepository extends JpaRepository<@NonNull ShardNode, @
 
     @Query("SELECT node FROM ShardNode node WHERE node.nodeStatus = 'ONLINE' AND node.nodeShardMap.status = 'ACTIVE'")
     List<ShardNode> findAllOnlineAndActiveNodes();
+
+    Optional<ShardNode> findByNodeShardMap_ShardNameAndHostNameAndPort(String shardName, String hostName, Integer port);
+
+    List<ShardNode> findAllByNodeShardMap_ShardName(String shardName);
 }

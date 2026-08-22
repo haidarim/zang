@@ -18,10 +18,10 @@ public interface ShardNodeService {
     List<ShardNode> getAllNodes();
 
     ShardNode createNode(String shardName, String hostName, Integer port, String region, NodeRole role,
-                    String connectionSecret, Integer maxConnection, Integer weight, NodeStatus status);
+                         String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status);
 
-    ShardNode updateNode(Long nodeId, String hostName, Integer port, String region, NodeRole role,
-            String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status);
+    ShardNode updateNode(Long nodeId, String shardName, String hostName, Integer port, String region, NodeRole role,
+                         String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status);
 
     Long deleteNode(String shardName, String hostName, Integer port);
 }

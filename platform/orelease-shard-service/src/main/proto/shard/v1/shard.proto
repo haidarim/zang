@@ -156,10 +156,9 @@ message GetNodeResponse {
     int32 port = 5;
     string region = 6;
     NodeRole role = 7;
-    string connection_secret = 8;
-    int32 max_connections = 9;
-    int32 weight = 10;
-    NodeStatus status = 11;
+    int32 max_connections = 8;
+    int32 weight = 9;
+    NodeStatus status = 10;
 }
 
 message GetAllNodesResponse{
@@ -176,10 +175,11 @@ message CreateNodeRequest {
     int32 port = 3;
     string region = 4;
     NodeRole role = 5;
-    string connection_secret = 6;
-    int32 max_connections = 7;
-    int32 weight = 8;
-    NodeStatus status = 9;
+    string username = 6;
+    string connection_secret = 7;
+    int32 max_connections = 8;
+    int32 weight = 9;
+    NodeStatus status = 10;
 }
 
 message CreateNodeResponse {
@@ -196,10 +196,11 @@ message UpdateNodeRequest {
     int32 port = 3;
     string region = 4;
     NodeRole role = 5;
-    string connection_secret = 6;
-    int32 max_connections = 7;
-    int32 weight = 8;
-    NodeStatus status = 9;
+    string username = 6;
+    string connection_secret = 7;
+    int32 max_connections = 8;
+    int32 weight = 9;
+    NodeStatus status = 10;
 }
 
 message UpdateNodeResponse {

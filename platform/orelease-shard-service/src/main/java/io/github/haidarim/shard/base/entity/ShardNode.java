@@ -40,14 +40,17 @@ public class ShardNode extends BaseEntity{
     @Column(name = "PORT", nullable = false)
     private Integer port = 5432;
 
-    @Column(name = "REGION")
+    @Column(name = "REGION", nullable = false)
     private String region;
 
     @Column(name = "NODE_ROLE", nullable = false)
     @Enumerated(EnumType.STRING)
     private NodeRole nodeRole = NodeRole.PRIMARY;
 
-    @Column(name = "CONNECTION_SECRET")
+    @Column(name = "USERNAME", nullable = false)
+    private String username;
+
+    @Column(name = "CONNECTION_SECRET", nullable = false)
     private String connectionSecret;
 
     @Column(name = "MAX_CONNECTIONS")
@@ -64,4 +67,20 @@ public class ShardNode extends BaseEntity{
     @Column(name = "VERSION", nullable = false)
     @ToString.Include
     private Long version;
+
+    public ShardNode(ShardMap shard, String hostName,
+                     Integer port, String region, NodeRole role,
+                     String username, String connectionSecret,
+                     Integer maxConnection, Integer weight, NodeStatus status){
+        this.nodeShardMap = shard;
+        this.hostName = hostName;
+        this.port = port;
+        this.region = region;
+        this.nodeRole = role;
+        this.username = username;
+        this.connectionSecret = connectionSecret;
+        this.maxConnections = maxConnection;
+        this.weight = weight;
+        this.nodeStatus = status;
+    }
 }

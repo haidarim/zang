@@ -22,9 +22,7 @@ public class ShardNodeModel extends CacheModel<Long> implements Serializable {
     private final String region;
     private final NodeRole role;
     private final NodeStatus nodeStatus;
-    private final String connectionSecret;
     private final Long nodeVersion;
-
 
     @Setter
     private ShardDomain domain;

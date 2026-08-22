@@ -63,7 +63,6 @@ public final class CacheUtils {
                 .domain(node.getNodeShardMap().getDomain())
                 .role(node.getNodeRole())
                 .nodeStatus(node.getNodeStatus())
-                .connectionSecret(node.getConnectionSecret())
                 .nodeVersion(node.getVersion())
                 .shardVersion(node.getNodeShardMap().getVersion())
                 .build();

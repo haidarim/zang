@@ -24,6 +24,9 @@ public class ShardRouteModel extends CacheModel<Integer> implements Serializable
     private final Long shardVersion;
     private final Long nodeVersion;
 
+    private final Integer maxConnection;
+    private final Integer weight;
+
     @Override
     public Integer getIdentifier() {
         return shardId;
