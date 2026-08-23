@@ -4,6 +4,7 @@ import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.api.event.CacheEvent;
+import io.github.haidarim.shard.api.event.NodeCacheEvent;
 import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.api.event.VirtualShardCacheEvent;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
@@ -29,8 +30,10 @@ import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEve
 public class RedisCacheSubscriber implements MessageListener {
 
     private final ObjectMapper mapper;
+
     private final ShardNodeCacheManager nodeCacheManager;
     private final VirtualShardCacheManager virtualShardCacheManager;
+    private final ShardRouteCacheManager routeCacheManager;
 
     @Override
     public void onMessage(@NonNull Message message, byte @Nullable [] pattern) {
@@ -50,7 +53,7 @@ public class RedisCacheSubscriber implements MessageListener {
                 break;
             }
             case SHARD_NODE -> {
-
+                invalidateLocalCachesForNode(event);
                 break;
             }
             default -> {
@@ -87,6 +90,15 @@ public class RedisCacheSubscriber implements MessageListener {
             models.forEach(m ->
                     virtualShardCacheManager.removeFromCaffeineCaches(m.getShardId(), m.getIdentifier())
             );
+        }
+    }
+
+    private void invalidateLocalCachesForNode(CacheEvent event){
+        boolean shouldInvalidateNode = (event instanceof NodeCacheEvent) &&
+                (UPDATED.equals(event.getEventType()) || DELETED.equals(event.getEventType()) || REPAIR.equals(event.getEventType()));
+        if(shouldInvalidateNode){
+            nodeCacheManager.removeFromCaffeine(((NodeCacheEvent) event).getModel().getNodeId());
+            routeCacheManager.removeFromCaffeine(((NodeCacheEvent) event).getModel().getShardId());
         }
     }
 }

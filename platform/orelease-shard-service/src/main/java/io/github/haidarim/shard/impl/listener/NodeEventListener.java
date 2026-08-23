@@ -7,6 +7,7 @@ import io.github.haidarim.shard.api.runtime.service.ShardRouteCacheManager;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.impl.control.cache.CacheProperty;
 import io.github.haidarim.shard.impl.control.cache.RedisCachePublisher;
+import io.github.haidarim.shard.impl.control.cache.message.CacheMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -25,36 +26,47 @@ public class NodeEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEvent(NodeCacheEvent event){
         // update shared redis cache for route cache
-        ShardNodeModel nodeModel = event.getModel();
-        if(nodeModel == null){
+        if(event.getModel() == null){
             return;
         }
 
         CacheProperty.CacheEventType eventType = event.getEventType();
         switch (eventType){
             case UPDATED -> {
-                updateCachesForNodeModel(nodeModel);
+                updateCachesForNodeModel(event);
                 break;
             }
             case DELETED -> {
-                deleteNodeModelFromCaches(nodeModel);
+                deleteNodeModelFromCaches(event);
                 break;
+            }
+            default -> {
+                throw new IllegalArgumentException("Unsupported event type");
             }
         }
     }
 
-    private void updateCachesForNodeModel(ShardNodeModel nodeModel){
+    private void updateCachesForNodeModel(NodeCacheEvent event){
+        ShardNodeModel nodeModel = event.getModel();
         nodeCacheManager.applyToSharedRedisCaches(nodeModel);
+
         routeCacheManager.applyPrimaryRouteToRedisCache(nodeModel.getShardId(), nodeModel.getNodeId());
         routeCacheManager.applyReplicaRoutesToRedisCache(nodeModel.getShardId(), Set.of(nodeModel.getNodeId()));
-        sendMessageToInvalidate(nodeModel);
+        sendMessageToInvalidate(event);
     }
 
-    private void deleteNodeModelFromCaches(ShardNodeModel nodeModel){
-        sendMessageToInvalidate(nodeModel);
+    private void deleteNodeModelFromCaches(NodeCacheEvent event){
+        ShardNodeModel nodeModel = event.getModel();
+        nodeCacheManager.removeFromRedisCache(nodeModel.getNodeId());
+
+        routeCacheManager.removeFromRedisCache(nodeModel.getShardId());
+
+        sendMessageToInvalidate(event);
     }
 
-    private void sendMessageToInvalidate(ShardNodeModel nodeModel){
-
+    private void sendMessageToInvalidate(NodeCacheEvent event){
+        cachePublisher.publish(
+                new CacheMessage(event)
+        );
     }
 }

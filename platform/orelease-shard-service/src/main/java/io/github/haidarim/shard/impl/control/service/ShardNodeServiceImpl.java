@@ -22,8 +22,7 @@ import java.util.List;
 
 import static io.github.haidarim.shard.api.common.type.NodeStatus.ONLINE;
 import static io.github.haidarim.shard.api.common.type.ShardStatus.ACTIVE;
-import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.CREATED;
-import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.UPDATED;
+import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEventType.*;
 
 
 @Service
@@ -144,7 +143,7 @@ public class ShardNodeServiceImpl implements ShardNodeService {
         }
 
         nodeRepository.saveAndFlush(node);
-        checkForStatusUpdates(node.getNodeShardMap().getStatus(), node.getNodeStatus());
+        checkForStatusUpdates(node, node.getNodeShardMap().getStatus(), node.getNodeStatus());
         if(nodeCacheModelBuilder != null && ONLINE.equals(node.getNodeStatus()) && ACTIVE.equals(node.getNodeShardMap().getStatus())){
             eventPublisher.publishEvent(
                 new NodeCacheEvent(
@@ -156,6 +155,8 @@ public class ShardNodeServiceImpl implements ShardNodeService {
                                 .shardStatus(node.getNodeShardMap().getStatus())
                                 .domain(node.getNodeShardMap().getDomain())
                                 .shardVersion(node.getNodeShardMap().getVersion())
+                                .nodeStatus(node.getNodeStatus())
+                                .databaseName(node.getNodeShardMap().getDatabaseName())
                                 .build(),
                         UPDATED
                 )
@@ -167,7 +168,22 @@ public class ShardNodeServiceImpl implements ShardNodeService {
 
     @Override
     public Long deleteNode(String shardName, String hostName, Integer port) {
-        return 0L;
+        validateNodeDetailsParameters(shardName, hostName, port);
+        ShardNode node = nodeRepository.findByNodeShardMap_ShardNameAndHostNameAndPort(shardName.trim(), hostName.trim(), port)
+                .orElseThrow(() -> new NodeNotFoundException(shardName, hostName, port));
+
+        nodeRepository.delete(node);
+        eventPublisher.publishEvent(
+                new NodeCacheEvent(
+                        ShardNodeModel.builder()
+                                .nodeId(node.getNodeId())
+                                .shardId(node.getNodeShardMap().getShardId())
+                                .build(),
+                        DELETED
+                )
+        );
+
+        return node.getNodeId();
     }
 
     private void validateNodeDetailsParameters(String shardName, String hostName, Integer port){
@@ -226,10 +242,20 @@ public class ShardNodeServiceImpl implements ShardNodeService {
     private boolean shardNameShouldBeUpdated(String newShardName, String currentShardName){
         return newShardName != null &&
                 !newShardName.isBlank()
-                && !currentShardName.equals(newShardName);
+                && !currentShardName.equals(newShardName.trim());
     }
 
-    private void checkForStatusUpdates(ShardStatus shardStatus, NodeStatus nodeStatus){
-        // TODO
+    private void checkForStatusUpdates(ShardNode node, ShardStatus shardStatus, NodeStatus nodeStatus){
+        if(!ACTIVE.equals(shardStatus) || !ONLINE.equals(nodeStatus)) {
+            eventPublisher.publishEvent(
+                    new NodeCacheEvent(
+                        ShardNodeModel.builder()
+                                .shardId(node.getNodeShardMap().getShardId())
+                                .nodeId(node.getNodeId())
+                                .build(),
+                            DELETED
+                    )
+            );
+        }
     }
 }
