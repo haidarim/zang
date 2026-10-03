@@ -2,8 +2,9 @@ package io.github.haidarim.shard.impl.control.cache;
 
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
-import io.github.haidarim.shard.base.entity.ShardNode;
+import io.github.haidarim.shard.base.projection.ShardNodeProjection;
 import io.github.haidarim.shard.base.repository.ShardNodeRepository;
+import io.github.haidarim.shard.exception.NodeNotFoundException;
 import io.github.haidarim.shard.utils.CacheUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -142,7 +143,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
 
     @Override
     public void refresh(){
-        Set<ShardNodeModel> nodes = repository.findAllOnlineAndActiveNodes()
+        Set<ShardNodeModel> nodes = repository.findByNodeStatusAndShardStatus(ONLINE, ACTIVE)
                 .stream()
                 .map(CacheUtils::mapToShardNodeModel).collect(Collectors.toSet());
         clear();
@@ -347,13 +348,15 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
     }
 
     private ShardNodeModel fetchFromDbAndUpdateCache(Long nodeId){
-        ShardNode node = repository.findById(nodeId).orElse(null);
+        ShardNodeProjection nodeProjection = repository.findProjectionByNodeId(nodeId).
+                orElseThrow(() -> new NodeNotFoundException(nodeId.toString()));
 
-        if(node == null || !(ONLINE.equals(node.getNodeStatus()) && ACTIVE.equals(node.getNodeShardMap().getStatus()))){
-            return null;
+        ShardNodeModel model = mapToShardNodeModel(nodeProjection);
+
+        if(!(ONLINE.equals(nodeProjection.getNodeStatus()) && ACTIVE.equals(nodeProjection.getShardStatus()))){
+            return model;
         }
 
-        ShardNodeModel model = mapToShardNodeModel(node);
         applyToCaffeineCaches(Set.of(model));
         applyToSharedRedisCaches(model);
         return model;
@@ -361,7 +364,7 @@ public class ShardNodeCacheManagerImpl implements ShardNodeCacheManager {
 
     private Set<ShardNodeModel> fetchNodesFromDbAndUpdateCache(Integer shardId) {
         Set<ShardNodeModel> models = repository
-                .findOnlineAndActiveNodesByShardId(shardId)
+                .findByShardIdAndNodeStatusAndShardStatus(shardId, ONLINE, ACTIVE)
                 .stream()
                 .map(CacheUtils::mapToShardNodeModel)
                 .collect(Collectors.toSet());

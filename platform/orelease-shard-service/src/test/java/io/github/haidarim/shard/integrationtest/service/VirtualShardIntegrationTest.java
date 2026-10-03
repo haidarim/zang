@@ -1,14 +1,16 @@
 package io.github.haidarim.shard.integrationtest.service;
 
+import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.api.common.type.ShardStatus;
 import io.github.haidarim.shard.api.control.service.ShardService;
 import io.github.haidarim.shard.api.control.service.VirtualShardService;
 import io.github.haidarim.shard.base.entity.ShardMap;
-import io.github.haidarim.shard.base.entity.VirtualShardMap;
+import io.github.haidarim.shard.base.projection.VirtualShardProjection;
 import io.github.haidarim.shard.base.repository.ShardMapRepository;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
 import io.github.haidarim.shard.integrationtest.common.AbstractShardTest;
+import org.hibernate.AssertionFailure;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +46,7 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
         List<String> shardNames = getShardNames();
         shardNames.forEach(shardName -> {
-            ShardMap shard = shardService.createShard(
+            ShardMapModel shard = shardService.createShard(
                     shardName,
                     TEST_DATABASE_NAME_A,
                     ShardDomain.CHAT,
@@ -55,7 +57,7 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
         int totalVirtualSize = 0;
         for (String shardName : shardNames) {
-            ShardMap shard = shardService.getShard(shardName);
+            ShardMapModel shard = shardService.getShard(shardName);
             totalVirtualSize += virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard.getShardId()).size();
             assertNotEquals(0, totalVirtualSize);
         }
@@ -71,10 +73,10 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
     @Test
     public void virtualShardsInitializationTest(){
-        ShardMap shard = shardService.createShard(TEST_SHARD_NAME_F, TEST_DATABASE_NAME_A, ShardDomain.CLIENT, ShardStatus.ACTIVE);
+        ShardMapModel shard = shardService.createShard(TEST_SHARD_NAME_F, TEST_DATABASE_NAME_A, ShardDomain.CLIENT, ShardStatus.ACTIVE);
 
         assertNotNull(shard);
-        List<VirtualShardMap> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard.getShardId());
+        List<VirtualShardProjection> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard.getShardId());
 
         assertFalse(virtualShardMaps.isEmpty());
         assertEquals(VIRTUAL_SHARD_SIZE, virtualShardMaps.size());
@@ -83,14 +85,14 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
     @Test
     public void virtualShardsRebalancingTest(){
-        ShardMap shard1 = shardService.createShard(TEST_SHARD_NAME_F, TEST_DATABASE_NAME_A, ShardDomain.CLIENT, ShardStatus.ACTIVE);
+        ShardMapModel shard1 = shardService.createShard(TEST_SHARD_NAME_F, TEST_DATABASE_NAME_A, ShardDomain.CLIENT, ShardStatus.ACTIVE);
         assertNotNull(shard1);
 
-        List<VirtualShardMap> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard1.getShardId());
+        List<VirtualShardProjection> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard1.getShardId());
         assertFalse(virtualShardMaps.isEmpty());
         assertEquals(VIRTUAL_SHARD_SIZE, virtualShardMaps.size());
 
-        ShardMap shard2 = shardService.createShard(TEST_SHARD_NAME_G, TEST_DATABASE_NAME_A, ShardDomain.CLIENT, ShardStatus.ACTIVE);
+        ShardMapModel shard2 = shardService.createShard(TEST_SHARD_NAME_G, TEST_DATABASE_NAME_A, ShardDomain.CLIENT, ShardStatus.ACTIVE);
         assertNotNull(shard2);
 
         int totalVirtualSize = virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard1.getShardId()).size();
@@ -105,14 +107,14 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
     @Test
     public void virtualShardRebalancingWhenDeletingShardTest(){
-        ShardMap shardToDelete = shardService.getShard(TEST_SHARD_NAME_C);
+        ShardMap shardToDelete = shardMapRepository.findShardMapByShardName(TEST_SHARD_NAME_C).orElseThrow(() -> new AssertionFailure("No shard found!"));
         virtualShardService.rebalanceBeforeShardDeletion(shardToDelete);
         Integer shardId = shardService.deleteShard(TEST_SHARD_NAME_C);
         assertNotNull(shardId);
         assertEquals(shardToDelete.getShardId(), shardId);
-        assertTrue(shardMapRepository.findByShardName(TEST_SHARD_NAME_C).isEmpty());
+        assertTrue(shardMapRepository.findShardProjectionByShardName(TEST_SHARD_NAME_C).isEmpty());
 
-        List<VirtualShardMap> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shardId);
+        List<VirtualShardProjection> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shardId);
         assertTrue(virtualShardMaps.isEmpty());
 
         List<String> shardNames =  List.of(TEST_SHARD_NAME_A, TEST_SHARD_NAME_B,
@@ -120,7 +122,7 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
         int totalVirtualSize = 0;
         for (String shardName : shardNames) {
-            ShardMap shard = shardService.getShard(shardName);
+            ShardMapModel shard = shardService.getShard(shardName);
             totalVirtualSize += virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard.getShardId()).size();
             assertNotEquals(0, totalVirtualSize);
         }
@@ -136,10 +138,10 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
     @Test
     public void virtualShardRebalancingWhenUpdatingShardTest(){
-        ShardMap shardToUpdate = shardService.updateShard(TEST_SHARD_NAME_C, TEST_DATABASE_NAME_A, ShardStatus.INACTIVE, 0L);
+        ShardMapModel shardToUpdate = shardService.updateShard(TEST_SHARD_NAME_C, TEST_DATABASE_NAME_A, ShardStatus.INACTIVE, 0L);
         assertEquals(ShardStatus.INACTIVE, shardToUpdate.getStatus());
 
-        List<VirtualShardMap> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shardToUpdate.getShardId());
+        List<VirtualShardProjection> virtualShardMaps =  virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shardToUpdate.getShardId());
         assertTrue(virtualShardMaps.isEmpty());
 
         List<String> shardNames =  List.of(TEST_SHARD_NAME_A, TEST_SHARD_NAME_B,
@@ -147,7 +149,7 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
         int totalVirtualSize = 0;
         for (String shardName : shardNames) {
-            ShardMap shard = shardService.getShard(shardName);
+            ShardMapModel shard = shardService.getShard(shardName);
             totalVirtualSize += virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard.getShardId()).size();
             assertNotEquals(0, totalVirtualSize);
         }
@@ -162,7 +164,7 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
         totalVirtualSize = 0;
         for (String shardName : shardNames) {
-            ShardMap shard = shardService.getShard(shardName);
+            ShardMapModel shard = shardService.getShard(shardName);
             totalVirtualSize += virtualShardMapRepository.findAllActiveVirtualIdsByShardId(shard.getShardId()).size();
             assertNotEquals(0, totalVirtualSize);
         }
@@ -180,7 +182,7 @@ public class VirtualShardIntegrationTest extends AbstractShardTest {
 
     private void deleteShards(List<String> shardNames){
         for (String shardName : shardNames){
-            ShardMap shard = shardService.getShard(shardName);
+            ShardMap shard = shardMapRepository.findShardMapByShardName(shardName).orElseThrow(() -> new AssertionFailure("No shard found!"));
             virtualShardService.rebalanceBeforeShardDeletion(shard);
             shardService.deleteShard(shardName);
         }

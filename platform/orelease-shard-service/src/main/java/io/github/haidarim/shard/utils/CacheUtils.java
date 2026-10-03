@@ -4,6 +4,7 @@ import io.github.haidarim.shard.api.common.model.CacheModel;
 import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.model.ShardRouteModel;
 import io.github.haidarim.shard.base.entity.ShardNode;
+import io.github.haidarim.shard.base.projection.ShardNodeProjection;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.Cursor;
@@ -48,6 +49,24 @@ public final class CacheUtils {
                                 Collectors.toSet()
                         )
                 ));
+    }
+
+    public static ShardNodeModel mapToShardNodeModel(ShardNodeProjection nodeProjection){
+        return ShardNodeModel.builder()
+                .nodeId(nodeProjection.getNodeId())
+                .shardId(nodeProjection.getShardId())
+                .shardName(nodeProjection.getShardName())
+                .shardStatus(nodeProjection.getShardStatus())
+                .databaseName(nodeProjection.getDatabaseName())
+                .hostName(nodeProjection.getHostName())
+                .port(nodeProjection.getPort())
+                .region(nodeProjection.getRegion())
+                .domain(nodeProjection.getDomain())
+                .role(nodeProjection.getRole())
+                .nodeStatus(nodeProjection.getNodeStatus())
+                .nodeVersion(nodeProjection.getNodeVersion())
+                .shardVersion(nodeProjection.getShardVersion())
+                .build();
     }
 
     public static ShardNodeModel mapToShardNodeModel(ShardNode node){

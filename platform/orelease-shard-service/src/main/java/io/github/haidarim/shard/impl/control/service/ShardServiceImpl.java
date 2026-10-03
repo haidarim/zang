@@ -7,6 +7,7 @@ import io.github.haidarim.shard.api.control.service.ShardService;
 import io.github.haidarim.shard.api.control.service.VirtualShardService;
 import io.github.haidarim.shard.api.event.ShardMapCacheEvent;
 import io.github.haidarim.shard.base.entity.ShardMap;
+import io.github.haidarim.shard.base.projection.ShardMapProjection;
 import io.github.haidarim.shard.base.repository.*;
 import io.github.haidarim.shard.impl.control.cache.CacheProperty;
 import io.github.haidarim.shard.exception.ShardNotFoundException;
@@ -37,30 +38,31 @@ public class ShardServiceImpl implements ShardService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public List<ShardMap> getAllShards() {
-        return shardMapRepository.findAll();
+    public List<ShardMapModel> getAllShards() {
+        return mapToShardMapModels(shardMapRepository.findAllProjections());
     }
 
     @Override
-    public ShardMap getShard(String shardName) {
+    public ShardMapModel getShard(String shardName) {
         if (shardName == null || shardName.isBlank()){
             throw new ShardValidationException("Shard name cannot be null or blank");
         }
-        return shardMapRepository.findByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
+        ShardMapProjection projection = shardMapRepository.findShardProjectionByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
+        return mapToShardMapModel(projection);
     }
 
     @Override
-    public List<ShardMap> getShardsForDatabase(String databaseName, ShardDomain domain) {
+    public List<ShardMapModel> getShardsForDatabase(String databaseName, ShardDomain domain) {
         if(databaseName == null || databaseName.isBlank() || domain == null){
             throw new ShardValidationException("Invalid database name or domain");
         }
 
-        return shardMapRepository.findShardsForDatabase(databaseName.trim(), domain);
+        return mapToShardMapModels(shardMapRepository.findShardsForDatabase(databaseName.trim(), domain));
     }
 
     @Override
     @Transactional
-    public ShardMap createShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status) {
+    public ShardMapModel createShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status) {
         validateFieldsAreNotNull(shardName, databaseName, domain, status);
         String trimmedShardName = shardName.trim();
         if (shardMapRepository.existsByShardName(trimmedShardName)){
@@ -72,17 +74,17 @@ public class ShardServiceImpl implements ShardService {
 
         virtualShardService.initializeOrRebalanceVirtualShards(shard);
 
-        return shard;
+        return mapToShardMapModel(shard);
     }
 
     @Override
     @Transactional
-    public ShardMap updateShard(String shardName, String databaseName, ShardStatus status, Long expectedVersion) {
+    public ShardMapModel updateShard(String shardName, String databaseName, ShardStatus status, Long expectedVersion) {
         if (shardName == null || shardName.isBlank()){
             throw new ShardValidationException("Shard name cannot be null or blank");
         }
 
-        ShardMap shard = shardMapRepository.findByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
+        ShardMap shard = shardMapRepository.findShardMapByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
         validateShardVersion(shard.getVersion(), expectedVersion);
 
         ShardMapModel.ShardMapModelBuilder modelBuilder = null;
@@ -116,7 +118,7 @@ public class ShardServiceImpl implements ShardService {
             );
         }
 
-        return shard;
+        return mapToShardMapModel(shard);
     }
 
     @Override
@@ -126,9 +128,9 @@ public class ShardServiceImpl implements ShardService {
             throw new ShardValidationException("Shard name cannot be null or blank");
         }
 
-        ShardMap shard = shardMapRepository.findByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
+        ShardMapProjection shard = shardMapRepository.findShardProjectionByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
         validateForShardDeletion(shard.getShardId());
-        shardMapRepository.delete(shard);
+        shardMapRepository.deleteById(shard.getShardId());
         eventPublisher.publishEvent(
                 new ShardMapCacheEvent(
                         ShardMapModel.builder()
@@ -195,5 +197,41 @@ public class ShardServiceImpl implements ShardService {
             log.info("Shard activated, assigning virtual shard");
             virtualShardService.initializeOrRebalanceVirtualShards(shard);
         }
+    }
+
+
+    private List<ShardMapModel> mapToShardMapModels(List<ShardMapProjection> projections){
+        return projections.stream().map(projection ->
+                ShardMapModel.builder()
+                        .shardId(projection.getShardId())
+                        .shardName(projection.getShardName())
+                        .databaseName(projection.getDatabaseName())
+                        .domain(projection.getDomain())
+                        .status(projection.getStatus())
+                        .version(projection.getVersion())
+                        .build()
+        ).toList();
+    }
+
+    private ShardMapModel mapToShardMapModel(ShardMapProjection projection){
+        return ShardMapModel.builder()
+                .shardId(projection.getShardId())
+                .shardName(projection.getShardName())
+                .databaseName(projection.getDatabaseName())
+                .domain(projection.getDomain())
+                .status(projection.getStatus())
+                .version(projection.getVersion())
+                .build();
+    }
+
+    private ShardMapModel mapToShardMapModel(ShardMap shardMap){
+        return ShardMapModel.builder()
+                .shardId(shardMap.getShardId())
+                .shardName(shardMap.getShardName())
+                .databaseName(shardMap.getDatabaseName())
+                .domain(shardMap.getDomain())
+                .status(shardMap.getStatus())
+                .version(shardMap.getVersion())
+                .build();
     }
 }

@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Setter
 public class VirtualShardModel extends CacheModel<VirtualShardMapId> implements Serializable {
     private final Integer virtualShardId;
-    private final String domain;
+    private final ShardDomain domain;
     private final Integer shardId;
 
     private final Long virtualVersion;
@@ -21,7 +21,7 @@ public class VirtualShardModel extends CacheModel<VirtualShardMapId> implements 
 
     @Override
     public VirtualShardMapId getIdentifier() {
-        return new VirtualShardMapId(ShardDomain.valueOf(domain), virtualShardId);
+        return new VirtualShardMapId(domain, virtualShardId);
     }
 
     @Override

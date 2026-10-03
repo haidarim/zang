@@ -178,7 +178,7 @@ public class VirtualShardServiceImpl implements VirtualShardService {
         Set<VirtualShardModel> models = virtualShards.stream()
                 .map(virtualShard -> VirtualShardModel.builder()
                         .virtualShardId(virtualShard.getId().getVirtualShardId())
-                        .domain(virtualShard.getPhysicalShardMap().getDomain().name())
+                        .domain(virtualShard.getPhysicalShardMap().getDomain())
                         .shardId(virtualShard.getPhysicalShardMap().getShardId())
                         .shardVersion(virtualShard.getPhysicalShardMap().getVersion())
                         .virtualVersion(virtualShard.getVersion())

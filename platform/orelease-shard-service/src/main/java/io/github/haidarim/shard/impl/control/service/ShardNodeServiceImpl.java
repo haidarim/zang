@@ -6,6 +6,7 @@ import io.github.haidarim.shard.api.common.type.NodeStatus;
 import io.github.haidarim.shard.api.common.type.ShardStatus;
 import io.github.haidarim.shard.api.control.service.ShardNodeService;
 import io.github.haidarim.shard.api.event.NodeCacheEvent;
+import io.github.haidarim.shard.api.runtime.service.ShardNodeCacheManager;
 import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.base.entity.ShardNode;
 import io.github.haidarim.shard.base.repository.ShardMapRepository;
@@ -13,12 +14,14 @@ import io.github.haidarim.shard.base.repository.ShardNodeRepository;
 import io.github.haidarim.shard.exception.NodeNotFoundException;
 import io.github.haidarim.shard.exception.NodeValidationException;
 import io.github.haidarim.shard.exception.ShardNotFoundException;
+import io.github.haidarim.shard.utils.CacheUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.github.haidarim.shard.api.common.type.NodeStatus.ONLINE;
 import static io.github.haidarim.shard.api.common.type.ShardStatus.ACTIVE;
@@ -30,43 +33,51 @@ import static io.github.haidarim.shard.impl.control.cache.CacheProperty.CacheEve
 @RequiredArgsConstructor
 public class ShardNodeServiceImpl implements ShardNodeService {
 
+    private final ShardNodeCacheManager nodeCacheManager;
     private final ShardNodeRepository nodeRepository;
     private final ShardMapRepository shardMapRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public ShardNode getNodeById(Long nodeId) {
+    public ShardNodeModel getNodeById(Long nodeId) {
         if (nodeId == null){
             throw new NodeNotFoundException("nodeId cannot be null");
         }
 
-        return nodeRepository.findById(nodeId).orElseThrow(() -> new NodeNotFoundException(nodeId.toString()));
+        return nodeCacheManager.getNode(nodeId);
     }
 
     @Override
-    public ShardNode getNodeByDetails(String shardName, String hostName, Integer port) {
+    public ShardNodeModel getNodeByDetails(String shardName, String hostName, Integer port) {
         validateNodeDetailsParameters(shardName, hostName, port);
 
-        return nodeRepository.findByNodeShardMap_ShardNameAndHostNameAndPort(shardName.trim(), hostName, port)
-                .orElseThrow(() -> new NodeNotFoundException(shardName, hostName, port));
+        return CacheUtils.mapToShardNodeModel(
+                nodeRepository.findByNodeShardMap_ShardNameAndHostNameAndPort(shardName.trim(), hostName, port)
+                .orElseThrow(() -> new NodeNotFoundException(shardName, hostName, port))
+        );
     }
 
     @Override
-    public List<ShardNode> getAllNodesForShard(String shardName) {
+    public List<ShardNodeModel> getAllNodesForShard(String shardName) {
         if (shardName == null || shardName.isBlank()){
             throw new NodeValidationException("Shard name cannot be null or empty: " + shardName);
         }
 
-        return nodeRepository.findAllByNodeShardMap_ShardName(shardName.trim());
+        return nodeRepository.findAllByNodeShardMap_ShardName(shardName.trim())
+                .stream()
+                .map(CacheUtils::mapToShardNodeModel)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<ShardNode> getAllNodes() {
-        return nodeRepository.findAll();
+    public List<ShardNodeModel> getAllNodes() {
+        return nodeRepository.findAllProjections().stream()
+                .map(CacheUtils::mapToShardNodeModel)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public ShardNode createNode(String shardName, String hostName, Integer port, String region, NodeRole role, String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status) {
+    public ShardNodeModel createNode(String shardName, String hostName, Integer port, String region, NodeRole role, String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status) {
         validateNodeDetailsParameters(shardName, hostName, port);
         validateNodeMandatoryFields(region, role, username, connectionSecret, maxConnections, weight, status);
         String trimmedShardName = shardName.trim();
@@ -77,15 +88,15 @@ public class ShardNodeServiceImpl implements ShardNodeService {
         if (nodeRepository.existsByNodeShardMap_ShardNameAndHostNameAndPort(trimmedShardName, hostName, port)){
             throw new NodeValidationException("Node Already exists");
         }
-        ShardMap shard = shardMapRepository.findByShardName(trimmedShardName).orElseThrow(() -> new ShardNotFoundException(shardName));
+        ShardMap shard = shardMapRepository.findShardMapByShardName(trimmedShardName).orElseThrow(() -> new ShardNotFoundException(shardName));
         ShardNode node = new ShardNode(shard, hostName, port, region, role, username, connectionSecret, maxConnections, weight, status);
 
         nodeRepository.saveAndFlush(node);
-        return node;
+        return CacheUtils.mapToShardNodeModel(node);
     }
 
     @Override
-    public ShardNode updateNode(Long nodeId, String shardName, String hostName, Integer port, String region, NodeRole role, String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status) {
+    public ShardNodeModel updateNode(Long nodeId, String shardName, String hostName, Integer port, String region, NodeRole role, String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status) {
         if (nodeId == null){
             throw new NodeValidationException("nodeId cannot be null!");
         }
@@ -95,7 +106,7 @@ public class ShardNodeServiceImpl implements ShardNodeService {
 
         ShardNodeModel.ShardNodeModelBuilder nodeCacheModelBuilder =  null;
         if (shardNameShouldBeUpdated(shardName, currentShardName)){
-            ShardMap newShard = shardMapRepository.findByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
+            ShardMap newShard = shardMapRepository.findShardMapByShardName(shardName.trim()).orElseThrow(() -> new ShardNotFoundException(shardName));
             node.setNodeShardMap(newShard);
 
             nodeCacheModelBuilder = ShardNodeModel.builder();
@@ -163,21 +174,23 @@ public class ShardNodeServiceImpl implements ShardNodeService {
             );
         }
 
-        return node;
+        return CacheUtils.mapToShardNodeModel(node);
     }
 
     @Override
     public Long deleteNode(String shardName, String hostName, Integer port) {
         validateNodeDetailsParameters(shardName, hostName, port);
-        ShardNode node = nodeRepository.findByNodeShardMap_ShardNameAndHostNameAndPort(shardName.trim(), hostName.trim(), port)
-                .orElseThrow(() -> new NodeNotFoundException(shardName, hostName, port));
+        ShardNodeModel node = CacheUtils.mapToShardNodeModel(
+                nodeRepository.findByNodeShardMap_ShardNameAndHostNameAndPort(shardName.trim(), hostName.trim(), port)
+                .orElseThrow(() -> new NodeNotFoundException(shardName, hostName, port))
+        );
 
-        nodeRepository.delete(node);
+        nodeRepository.deleteById(node.getNodeId());
         eventPublisher.publishEvent(
                 new NodeCacheEvent(
                         ShardNodeModel.builder()
                                 .nodeId(node.getNodeId())
-                                .shardId(node.getNodeShardMap().getShardId())
+                                .shardId(node.getShardId())
                                 .build(),
                         DELETED
                 )

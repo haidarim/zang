@@ -1,10 +1,12 @@
 package io.github.haidarim.shard.integrationtest.service;
 
+import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.api.common.type.ShardStatus;
 import io.github.haidarim.shard.api.control.service.ShardService;
 import io.github.haidarim.shard.api.control.service.VirtualShardService;
 import io.github.haidarim.shard.base.entity.ShardMap;
+import io.github.haidarim.shard.base.projection.ShardMapProjection;
 import io.github.haidarim.shard.base.repository.ShardMapRepository;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
 import io.github.haidarim.shard.exception.ShardValidationException;
@@ -44,7 +46,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
         List.of(TEST_SHARD_NAME_A, TEST_SHARD_NAME_B, TEST_SHARD_NAME_C,
                         TEST_SHARD_NAME_D, TEST_SHARD_NAME_E)
                 .forEach(shardName -> {
-                    ShardMap shard = shardService.createShard(
+                    ShardMapModel shard = shardService.createShard(
                             shardName,
                             TEST_DATABASE_NAME_A,
                             ShardDomain.CHAT,
@@ -53,7 +55,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
                     assertNotNull(shard);
                 });
 
-        ShardMap shard = shardService.createShard(
+        ShardMapModel shard = shardService.createShard(
                 TEST_SHARD_NAME_F,
                 TEST_DATABASE_NAME_B,
                 ShardDomain.CHAT,
@@ -65,7 +67,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
 
     @Test
     public void getAllShardsTest(){
-        List<ShardMap> shards = shardService.getAllShards();
+        List<ShardMapModel> shards = shardService.getAllShards();
         assertFalse(shards.isEmpty());
         assertEquals(6, shards.size());
     }
@@ -77,7 +79,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
         assertThrows(ShardValidationException.class, () -> shardService.getShard(""));
         assertThrows(ShardValidationException.class, () -> shardService.getShard("     "));
 
-        ShardMap shard = shardService.getShard(TEST_SHARD_NAME_D);
+        ShardMapModel shard = shardService.getShard(TEST_SHARD_NAME_D);
         assertNotNull(shard);
         assertEquals(TEST_DATABASE_NAME_A, shard.getDatabaseName());
         assertEquals(ShardDomain.CHAT, shard.getDomain());
@@ -91,7 +93,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
         assertThrows(ShardValidationException.class, () -> shardService.getShardsForDatabase("", ShardDomain.CHAT));
         assertThrows(ShardValidationException.class, () -> shardService.getShardsForDatabase("       ", ShardDomain.CHAT));
 
-        List<ShardMap> shards = shardService.getShardsForDatabase(TEST_DATABASE_NAME_A, ShardDomain.CHAT);
+        List<ShardMapModel> shards = shardService.getShardsForDatabase(TEST_DATABASE_NAME_A, ShardDomain.CHAT);
 
         assertFalse(shards.isEmpty());
         assertEquals(5, shards.size());
@@ -127,7 +129,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
         assertThrows(ShardValidationException.class, () -> shardService.createShard(TEST_SHARD_NAME_A, TEST_DATABASE_NAME_A,
                 ShardDomain.CHAT, ShardStatus.ACTIVE));
 
-        ShardMap shardToStore = shardService.createShard(
+        ShardMapModel shardToStore = shardService.createShard(
                 TEST_SHARD_NAME_G,
                 TEST_DATABASE_NAME_A,
                 ShardDomain.CHAT,
@@ -136,12 +138,10 @@ public class ShardIntegrationTest extends AbstractShardTest {
 
         assertNotNull(shardToStore);
 
-        ShardMap storedShard = repository.findByShardName(TEST_SHARD_NAME_G).orElseThrow(
+        ShardMapProjection storedShard = repository.findShardProjectionByShardName(TEST_SHARD_NAME_G).orElseThrow(
                 () -> new AssertionFailure("No shard found with this shard name")
         );
         assertNotNull(storedShard);
-
-        assertEquals(shardToStore, storedShard);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
         assertThrows(ShardValidationException.class, () -> shardService.updateShard(TEST_SHARD_NAME_A, TEST_DATABASE_NAME_B, ShardStatus.INACTIVE, 1L));
 
         shardService.updateShard(TEST_SHARD_NAME_A, TEST_DATABASE_NAME_B, ShardStatus.INACTIVE, 0L);
-        ShardMap shard = repository.findByShardName(TEST_SHARD_NAME_A).orElseThrow(()-> new AssertionFailure("Failed to find shard with this shardName"));
+        ShardMapProjection shard = repository.findShardProjectionByShardName(TEST_SHARD_NAME_A).orElseThrow(()-> new AssertionFailure("Failed to find shard with this shardName"));
 
         assertEquals(1L, shard.getVersion());
         assertEquals(TEST_DATABASE_NAME_B, shard.getDatabaseName());
@@ -166,7 +166,7 @@ public class ShardIntegrationTest extends AbstractShardTest {
         assertThrows(ShardValidationException.class, () -> shardService.deleteShard(""));
         assertThrows(ShardValidationException.class, () -> shardService.deleteShard("    "));
 
-        ShardMap shard = shardService.getShard(TEST_SHARD_NAME_B);
+        ShardMap shard = repository.findShardMapByShardName(TEST_SHARD_NAME_B).orElseThrow(() -> new AssertionFailure("No shard found!"));
         assertNotNull(shard);
 
         virtualShardService.rebalanceBeforeShardDeletion(shard);

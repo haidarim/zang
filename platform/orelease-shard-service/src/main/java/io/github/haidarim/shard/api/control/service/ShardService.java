@@ -1,5 +1,6 @@
 package io.github.haidarim.shard.api.control.service;
 
+import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.api.common.type.ShardStatus;
 import io.github.haidarim.shard.base.entity.ShardMap;
@@ -13,24 +14,24 @@ public interface ShardService {
 
     /**
      * Returns All ShardMap
-     * @return shardMaps List
+     * @return shardMapModels List
      */
-    List<ShardMap> getAllShards();
+    List<ShardMapModel> getAllShards();
 
     /**
      * Returns ShardMap
      * @param shardName String
-     * @return shard ShardMap
+     * @return shard ShardMapModel
      */
-    ShardMap getShard(String shardName);
+    ShardMapModel getShard(String shardName);
 
     /**
      * Returns all shard maps for given database and domain
      * @param databaseName String
      * @param domain {@link io.github.haidarim.shard.api.common.type.ShardDomain}
-     * @return shardMaps List
+     * @return shardMapModels List
      */
-    List<ShardMap> getShardsForDatabase(String databaseName, ShardDomain domain);
+    List<ShardMapModel> getShardsForDatabase(String databaseName, ShardDomain domain);
 
     /**
      * Creates new shard
@@ -38,9 +39,9 @@ public interface ShardService {
      * @param databaseName String
      * @param domain {@link ShardDomain}
      * @param status {@link io.github.haidarim.shard.api.common.type.ShardStatus}
-     * @return shard {@link ShardMap}
+     * @return shard {@link ShardMapModel}
      */
-    ShardMap createShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status);
+    ShardMapModel createShard(String shardName, String databaseName, ShardDomain domain, ShardStatus status);
 
     /**
      * Update shard
@@ -48,9 +49,9 @@ public interface ShardService {
      * @param databaseName String
      * @param status ShardStatus
      * @param expectedVersion Long
-     * @return shard {@link ShardMap}
+     * @return shard {@link ShardMapModel}
      */
-    ShardMap updateShard(String shardName, String databaseName, ShardStatus status, Long expectedVersion);
+    ShardMapModel updateShard(String shardName, String databaseName, ShardStatus status, Long expectedVersion);
 
     /**
      * Delete shard

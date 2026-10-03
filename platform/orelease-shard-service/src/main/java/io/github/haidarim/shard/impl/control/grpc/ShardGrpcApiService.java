@@ -1,7 +1,7 @@
 package io.github.haidarim.shard.impl.control.grpc;
 
+import io.github.haidarim.shard.api.common.model.ShardMapModel;
 import io.github.haidarim.shard.api.control.service.ShardService;
-import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.generated.grpc.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -25,7 +25,7 @@ public class ShardGrpcApiService extends ShardMapApiServiceGrpc.ShardMapApiServi
     @Override
     public void getAllShards(GetAllShardsRequest request, StreamObserver<GetAllShardsResponse> responseStreamObserver){
         try {
-            List<ShardMap> shards =  shardService.getAllShards();
+            List<ShardMapModel> shards =  shardService.getAllShards();
             GetAllShardsResponse response = GetAllShardsResponse.newBuilder()
                     .addAllShards(
                             shards.stream()
@@ -60,7 +60,7 @@ public class ShardGrpcApiService extends ShardMapApiServiceGrpc.ShardMapApiServi
     @Override
     public void getShardsForDatabase(GetShardsForDatabaseRequest request, StreamObserver<GetShardsForDatabaseResponse> responseStreamObserver){
         try{
-            List<ShardMap> shards = shardService.getShardsForDatabase(request.getDatabaseName(), io.github.haidarim.shard.api.common.type.ShardDomain.valueOf(request.getDomain().name()));
+            List<ShardMapModel> shards = shardService.getShardsForDatabase(request.getDatabaseName(), io.github.haidarim.shard.api.common.type.ShardDomain.valueOf(request.getDomain().name()));
             GetShardsForDatabaseResponse response = GetShardsForDatabaseResponse.newBuilder()
                     .addAllShards(
                             shards.stream().map(
@@ -79,7 +79,7 @@ public class ShardGrpcApiService extends ShardMapApiServiceGrpc.ShardMapApiServi
     @Override
     public void createShard(CreateShardRequest request, StreamObserver<CreateShardResponse> responseStreamObserver){
         try {
-            ShardMap shard = shardService.createShard(request.getShardName(), request.getDatabaseName(), io.github.haidarim.shard.api.common.type.ShardDomain.valueOf(request.getDomain().name()), io.github.haidarim.shard.api.common.type.ShardStatus.valueOf(request.getStatus().name()));
+            ShardMapModel shard = shardService.createShard(request.getShardName(), request.getDatabaseName(), io.github.haidarim.shard.api.common.type.ShardDomain.valueOf(request.getDomain().name()), io.github.haidarim.shard.api.common.type.ShardStatus.valueOf(request.getStatus().name()));
             CreateShardResponse response = CreateShardResponse.newBuilder()
                     .setShardId(shard.getShardId())
                     .setShardName(shard.getShardName())
@@ -96,7 +96,7 @@ public class ShardGrpcApiService extends ShardMapApiServiceGrpc.ShardMapApiServi
     @Override
     public void updateShard(UpdateShardRequest request, StreamObserver<UpdateShardResponse> responseStreamObserver){
         try {
-            ShardMap shard = shardService
+            ShardMapModel shard = shardService
                     .updateShard(request.getShardName(), request.getDatabaseName(), io.github.haidarim.shard.api.common.type.ShardStatus.valueOf(request.getStatus().name()), request.getExpectedVersion());
             UpdateShardResponse response = UpdateShardResponse.newBuilder()
                     .setShardId(shard.getShardId())
@@ -128,14 +128,14 @@ public class ShardGrpcApiService extends ShardMapApiServiceGrpc.ShardMapApiServi
         }
     }
 
-    private GetShardResponse toShardResponse(ShardMap shard){
+    private GetShardResponse toShardResponse(ShardMapModel model){
         return GetShardResponse.newBuilder()
-                .setShardId(shard.getShardId())
-                .setShardName(shard.getShardName())
-                .setDatabaseName(shard.getDatabaseName())
-                .setDomain(ShardDomain.valueOf(shard.getDomain().name()))
-                .setStatus(ShardStatus.valueOf(shard.getStatus().name()))
-                .setVersion(shard.getVersion())
+                .setShardId(model.getShardId())
+                .setShardName(model.getShardName())
+                .setDatabaseName(model.getDatabaseName())
+                .setDomain(ShardDomain.valueOf(model.getDomain().name()))
+                .setStatus(ShardStatus.valueOf(model.getStatus().name()))
+                .setVersion(model.getVersion())
                 .build();
     }
 

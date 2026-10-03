@@ -4,8 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import io.github.haidarim.shard.api.common.model.VirtualShardModel;
 import io.github.haidarim.shard.api.common.type.ShardDomain;
 import io.github.haidarim.shard.api.runtime.service.VirtualShardCacheManager;
-import io.github.haidarim.shard.base.entity.VirtualShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMapId;
+import io.github.haidarim.shard.base.projection.VirtualShardProjection;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -119,12 +119,12 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
     public void refresh(){
         Set<VirtualShardModel> models = repository.findAllActiveMappings()
                 .stream()
-                .map(virtualShardMap -> VirtualShardModel.builder()
-                        .shardId(virtualShardMap.getPhysicalShardMap().getShardId())
-                        .virtualShardId(virtualShardMap.getId().getVirtualShardId())
-                        .domain(virtualShardMap.getId().getDomain().name())
-                        .virtualVersion(virtualShardMap.getVersion())
-                        .shardVersion(virtualShardMap.getPhysicalShardMap().getVersion())
+                .map(projection -> VirtualShardModel.builder()
+                        .shardId(projection.getShardId())
+                        .virtualShardId(projection.getVirtualShardId())
+                        .domain(projection.getDomain())
+                        .virtualVersion(projection.getVirtualVersion())
+                        .shardVersion(projection.getShardVersion())
                         .build()
                 ).collect(Collectors.toSet());
         clear();
@@ -147,7 +147,7 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
         RedisSerializer<@NonNull VirtualShardModel> valueSerializer = (RedisSerializer<@NonNull VirtualShardModel>) virtualShardRedisCache.getValueSerializer();
         virtualShardRedisCache.executePipelined((RedisCallback<Object>) connection -> {
             models.forEach(model -> {
-                byte[] key = keySerializer.serialize(virtualShard(model.getDomain(), model.getVirtualShardId()));
+                byte[] key = keySerializer.serialize(virtualShard(model.getDomain().name(), model.getVirtualShardId()));
 
                 byte[] value = valueSerializer.serialize(model);
 
@@ -159,7 +159,7 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
 
     @Override
     public void applyToVirtualShardRedisCache(VirtualShardModel model) {
-        virtualShardRedisCache.opsForValue().set(virtualShard(model.getDomain(), model.getVirtualShardId()), model);
+        virtualShardRedisCache.opsForValue().set(virtualShard(model.getDomain().name(), model.getVirtualShardId()), model);
     }
 
 
@@ -257,8 +257,8 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
     }
 
     private VirtualShardModel fetchAndUpdateCache(VirtualShardMapId id){
-        VirtualShardMap map = repository.findActiveVirtualShardMapById(id).orElseThrow(() -> new RuntimeException("No such entity found"));
-        VirtualShardModel model = mapToVirtualShardModel(map);
+        VirtualShardProjection projection = repository.findActiveVirtualShardMapById(id).orElseThrow(() -> new RuntimeException("No such entity found"));
+        VirtualShardModel model = mapToVirtualShardModel(projection);
 
         applyToVirtualShardCache(model);
         applyToShardIndexCache(model);
@@ -284,13 +284,13 @@ public class VirtualShardCacheManagerImpl implements VirtualShardCacheManager {
         return models;
     }
 
-    private VirtualShardModel mapToVirtualShardModel(VirtualShardMap map){
+    private VirtualShardModel mapToVirtualShardModel(VirtualShardProjection projection){
         return VirtualShardModel.builder()
-                .shardId(map.getPhysicalShardMap().getShardId())
-                .virtualShardId(map.getId().getVirtualShardId())
-                .domain(map.getId().getDomain().name())
-                .virtualVersion(map.getVersion())
-                .shardVersion(map.getPhysicalShardMap().getVersion())
+                .shardId(projection.getShardId())
+                .virtualShardId(projection.getVirtualShardId())
+                .domain(projection.getDomain())
+                .virtualVersion(projection.getVirtualVersion())
+                .shardVersion(projection.getShardVersion())
                 .build();
     }
 }

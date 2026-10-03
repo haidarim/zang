@@ -4,6 +4,7 @@ package io.github.haidarim.shard.systemtest.grpc;
 import io.github.haidarim.shard.api.control.service.VirtualShardService;
 import io.github.haidarim.shard.base.entity.ShardMap;
 import io.github.haidarim.shard.base.entity.VirtualShardMap;
+import io.github.haidarim.shard.base.projection.ShardMapProjection;
 import io.github.haidarim.shard.base.repository.ShardMapRepository;
 import io.github.haidarim.shard.base.repository.VirtualShardMapRepository;
 import io.github.haidarim.shard.exception.ShardNotFoundException;
@@ -98,7 +99,7 @@ public class ShardGrpcApiServiceSystemTest extends AbstractShardTest {
         );
         assertNotNull(response);
 
-        ShardMap shard = shardMapRepository.findByShardName(TEST_SHARD_NAME_D).orElseThrow(() -> new AssertionError("No shard found with this shardName"));
+        ShardMapProjection shard = shardMapRepository.findShardProjectionByShardName(TEST_SHARD_NAME_D).orElseThrow(() -> new AssertionError("No shard found with this shardName"));
         assertEquals(shard.getShardId(), response.getShardId());
         assertEquals(shard.getShardName(), response.getShardName());
         assertEquals(shard.getDatabaseName(), response.getDatabaseName());
@@ -151,7 +152,7 @@ public class ShardGrpcApiServiceSystemTest extends AbstractShardTest {
                         .build()
         );
         assertNotNull(response);
-        ShardMap shard = shardMapRepository.findByShardName(TEST_SHARD_NAME_F).orElseThrow(() -> new AssertionError("No shard found with this shardName"));
+        ShardMapProjection shard = shardMapRepository.findShardProjectionByShardName(TEST_SHARD_NAME_F).orElseThrow(() -> new AssertionError("No shard found with this shardName"));
         assertEquals(TEST_SHARD_NAME_F, shard.getShardName());
         assertEquals(TEST_DATABASE_NAME_B, shard.getDatabaseName());
         assertEquals(io.github.haidarim.shard.api.common.type.ShardDomain.CHAT, shard.getDomain());
@@ -172,7 +173,7 @@ public class ShardGrpcApiServiceSystemTest extends AbstractShardTest {
                         .build()
         );
 
-        ShardMap shard = shardMapRepository.findByShardName(TEST_SHARD_NAME_B).orElseThrow(() -> new AssertionError("No shard found with this shardName"));
+        ShardMapProjection shard = shardMapRepository.findShardProjectionByShardName(TEST_SHARD_NAME_B).orElseThrow(() -> new AssertionError("No shard found with this shardName"));
         assertNotNull(shard);
 
         assertEquals(response.getShardId(), shard.getShardId());
@@ -195,7 +196,7 @@ public class ShardGrpcApiServiceSystemTest extends AbstractShardTest {
                                 .build()
                 )
         );
-        ShardMap shard = shardMapRepository.findByShardName(TEST_SHARD_NAME_C).orElseThrow(() -> new ShardNotFoundException("No shard found for given shard name"));
+        ShardMap shard = shardMapRepository.findShardMapByShardName(TEST_SHARD_NAME_C).orElseThrow(() -> new ShardNotFoundException("No shard found for given shard name"));
 
         virtualShardService.rebalanceBeforeShardDeletion(shard);
 
@@ -205,7 +206,7 @@ public class ShardGrpcApiServiceSystemTest extends AbstractShardTest {
                         .build()
         );
         assertTrue(shardMapRepository.findById(shard.getShardId()).isEmpty());
-        assertTrue(shardMapRepository.findByShardName(TEST_SHARD_NAME_C).isEmpty());
+        assertTrue(shardMapRepository.findShardProjectionByShardName(TEST_SHARD_NAME_C).isEmpty());
         assertEquals(0, virtualShardRepository.findAllActiveVirtualIdsByShardId(response.getShardId()).size());
         assertEquals(VIRTUAL_SHARD_SIZE, virtualShardRepository.findAllById_Domain(io.github.haidarim.shard.api.common.type.ShardDomain.CHAT).size());
 

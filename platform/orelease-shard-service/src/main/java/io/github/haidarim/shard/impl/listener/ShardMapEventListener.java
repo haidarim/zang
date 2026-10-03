@@ -74,7 +74,7 @@ public class ShardMapEventListener {
                     VirtualShardModel.builder()
                             .shardId(model.getShardId())
                             .virtualShardId(m.getVirtualShardId())
-                            .domain(model.getDomain().name())
+                            .domain(model.getDomain())
                             .virtualVersion(m.getVirtualVersion())
                             .shardVersion(model.getVersion())
                             .build()

@@ -1,9 +1,9 @@
 package io.github.haidarim.shard.api.control.service;
 
 
+import io.github.haidarim.shard.api.common.model.ShardNodeModel;
 import io.github.haidarim.shard.api.common.type.NodeRole;
 import io.github.haidarim.shard.api.common.type.NodeStatus;
-import io.github.haidarim.shard.base.entity.ShardNode;
 
 import java.util.List;
 
@@ -12,31 +12,31 @@ public interface ShardNodeService {
     /**
      * Get Node by nodeId
      * @param nodeId Long
-     * @return node ShardNode
+     * @return node ShardNodeModel
      */
-    ShardNode getNodeById(Long nodeId);
+    ShardNodeModel getNodeById(Long nodeId);
 
     /**
      * Get Node by details
      * @param shardName String
      * @param hostName String
      * @param port Integer
-     * @return node ShardNode
+     * @return node ShardNodeModel
      */
-    ShardNode getNodeByDetails(String shardName, String hostName, Integer port);
+    ShardNodeModel getNodeByDetails(String shardName, String hostName, Integer port);
 
     /**
      * Get all nodes for shard by shardName
      * @param shardName String
      * @return nodes List
      */
-    List<ShardNode> getAllNodesForShard(String shardName);
+    List<ShardNodeModel> getAllNodesForShard(String shardName);
 
     /**
      * Get all existing nodes
      * @return nodes List
      */
-    List<ShardNode> getAllNodes();
+    List<ShardNodeModel> getAllNodes();
 
     /**
      * Create new node
@@ -50,9 +50,9 @@ public interface ShardNodeService {
      * @param maxConnections Integer
      * @param weight Integer
      * @param status NodeStatus
-     * @return node ShardNode
+     * @return node ShardNodeModel
      */
-    ShardNode createNode(String shardName, String hostName, Integer port, String region, NodeRole role,
+    ShardNodeModel createNode(String shardName, String hostName, Integer port, String region, NodeRole role,
                          String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status);
 
     /**
@@ -68,9 +68,9 @@ public interface ShardNodeService {
      * @param maxConnections Integer
      * @param weight Integer
      * @param status NodeStatus
-     * @return node ShardNode
+     * @return node ShardNodeModel
      */
-    ShardNode updateNode(Long nodeId, String shardName, String hostName, Integer port, String region, NodeRole role,
+    ShardNodeModel updateNode(Long nodeId, String shardName, String hostName, Integer port, String region, NodeRole role,
                          String username, String connectionSecret, Integer maxConnections, Integer weight, NodeStatus status);
 
     /**
